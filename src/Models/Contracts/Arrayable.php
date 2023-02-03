@@ -1,0 +1,17 @@
+<?php
+
+namespace StellarWP\Models\Contracts;
+
+/**
+ * @since 1.0.0
+ */
+interface Arrayable {
+	/**
+	 * Get the instance as an array.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array
+	 */
+	public function toArray();
+}
