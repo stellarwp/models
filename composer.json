@@ -38,7 +38,11 @@
   },
   "autoload": {
     "psr-4": {
-      "StellarWP\\Models\\": "src/Models/",
+      "StellarWP\\Models\\": "src/Models/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
       "StellarWP\\Models\\Tests\\": "tests/_support/Helper/"
     }
   }
