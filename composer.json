@@ -4,6 +4,7 @@
   "keywords": ["stellarwp"],
   "type": "library",
   "homepage": "https://github.com/stellarwp/models",
+  "license": "GPL-3.0-or-later",
   "authors": [
     {
       "name": "StellarWP",
