@@ -2,7 +2,6 @@
 
 namespace StellarWP\Models\Contracts;
 
-use StellarWP\Models\Model;
 use StellarWP\Models\ModelQueryBuilder;
 
 /**

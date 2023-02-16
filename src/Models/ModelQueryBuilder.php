@@ -3,10 +3,10 @@
 namespace StellarWP\Models;
 
 use InvalidArgumentException;
-use StellarWP\Models\StellarWP\DB\DB;
-use StellarWP\Models\StellarWP\DB\QueryBuilder\QueryBuilder;
-use StellarWP\Models\StellarWP\DB\QueryBuilder\Clauses\RawSQL;
-use StellarWP\Models\Models\Model;
+use StellarWP\DB\DB;
+use StellarWP\DB\QueryBuilder\QueryBuilder;
+use StellarWP\DB\QueryBuilder\Clauses\RawSQL;
+use StellarWP\Models\Model;
 
 /**
  * @since 1.0.0

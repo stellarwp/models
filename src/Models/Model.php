@@ -4,11 +4,11 @@ namespace StellarWP\Models;
 
 use JsonSerializable;
 use RuntimeException;
-use StellarWP\Models\Config;
 use StellarWP\Models\Contracts\Arrayable;
+use StellarWP\Models\Contracts\Model as ModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
 
-abstract class Model implements Arrayable, JsonSerializable {
+abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * The model's attributes.
 	 *

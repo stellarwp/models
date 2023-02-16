@@ -2,7 +2,7 @@
 
 namespace StellarWP\Models\Repositories\Contracts;
 
-use StellarWP\Models\Model;
+use StellarWP\Models\Contracts\Model;
 
 interface Deletable {
 	/**

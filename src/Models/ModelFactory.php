@@ -5,7 +5,6 @@ namespace StellarWP\Models;
 use Exception;
 use Faker\Generator;
 use StellarWP\DB\DB;
-use function StellarWP\Models\Factories\give;
 
 /**
  * @template M
