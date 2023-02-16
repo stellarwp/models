@@ -183,15 +183,15 @@ abstract class Model implements Arrayable, JsonSerializable {
 			return $this->cachedRelations[ $key ];
 		}
 
-		$relationship = new Relationship( $this->relationships[ $key ] );
+		$relationship = $this->relationships[ $key ];
 
-		switch ( true ) {
-			case ( $relationship->equals( Relationship::BELONGS_TO() ) ):
-			case ( $relationship->equals( Relationship::HAS_ONE() ) ):
+		switch ( $relationship ) {
+			case Relationship::BELONGS_TO:
+			case Relationship::HAS_ONE:
 				return $this->cachedRelations[ $key ] = $this->$key()->get();
-			case ( $relationship->equals( Relationship::HAS_MANY() ) ):
-			case ( $relationship->equals( Relationship::BELONGS_TO_MANY() ) ):
-			case ( $relationship->equals( Relationship::MANY_TO_MANY() ) ):
+			case Relationship::HAS_MANY:
+			case Relationship::BELONGS_TO_MANY:
+			case Relationship::MANY_TO_MANY:
 				return $this->cachedRelations[ $key ] = $this->$key()->getAll();
 		}
 

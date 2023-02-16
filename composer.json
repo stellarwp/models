@@ -21,7 +21,6 @@
   },
   "require": {
     "fakerphp/faker": "^1.9",
-    "myclabs/php-enum": "^1.6",
     "stellarwp/db": "^1.0.3"
   },
   "require-dev": {

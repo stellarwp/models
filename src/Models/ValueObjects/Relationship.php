@@ -2,8 +2,6 @@
 
 namespace StellarWP\Models\ValueObjects;
 
-use StellarWP\Models\ValueObjects\Enum;
-
 /**
  * Model Relationships
  *
@@ -15,7 +13,7 @@ use StellarWP\Models\ValueObjects\Enum;
  * @method static BELONGS_TO();
  * @method static BELONGS_TO_MANY();
  */
-class Relationship extends Enum
+class Relationship
 {
 	const HAS_ONE = 'has-one';
 	const HAS_MANY = 'has-many';
