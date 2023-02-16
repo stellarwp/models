@@ -1,11 +1,11 @@
 <?php
 
-namespace StellarWP\Models\Factories;
+namespace StellarWP\Models;
 
 use Exception;
 use Faker\Generator;
 use StellarWP\DB\DB;
-use StellarWP\Models\Contracts\ModelCrud;
+use function StellarWP\Models\Factories\give;
 
 /**
  * @template M

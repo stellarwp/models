@@ -2,7 +2,7 @@
 
 namespace StellarWP\Models\Contracts;
 
-use StellarWP\Models\Factories\ModelFactory;
+use StellarWP\Models\ModelFactory;
 
 /**
  * @since 1.0.0
