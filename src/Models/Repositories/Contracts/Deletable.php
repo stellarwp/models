@@ -4,7 +4,7 @@ namespace StellarWP\Models\Repositories\Contracts;
 
 use StellarWP\Models\Model;
 
-interface Deleteable {
+interface Deletable {
 	/**
 	 * Inserts a model record.
 	 *

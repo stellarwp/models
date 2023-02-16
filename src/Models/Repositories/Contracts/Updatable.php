@@ -4,7 +4,7 @@ namespace StellarWP\Models\Repositories\Contracts;
 
 use StellarWP\Models\Model;
 
-interface Updateable {
+interface Updatable {
 	/**
 	 * Inserts a model record.
 	 *
