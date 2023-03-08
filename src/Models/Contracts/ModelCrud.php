@@ -46,13 +46,4 @@ interface ModelCrud {
 	 * @return ModelQueryBuilder
 	 */
 	public static function query();
-
-	/**
-	 * @since 1.0.0
-	 *
-	 * @param $object
-	 *
-	 * @return Model
-	 */
-	public static function fromQueryBuilderObject( $object );
 }

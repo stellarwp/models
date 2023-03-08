@@ -98,7 +98,7 @@ abstract class ModelFactory {
 	 * @since 1.0.0
 	 */
 	protected function withFaker() : Generator {
-		return give()->make( Generator::class );
+		return new Generator();
 	}
 
 	/**
