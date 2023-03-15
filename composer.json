@@ -21,7 +21,6 @@
     }
   },
   "require": {
-    "fakerphp/faker": "^1.9",
     "stellarwp/db": "^1.0.3"
   },
   "require-dev": {

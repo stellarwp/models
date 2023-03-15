@@ -3,7 +3,6 @@
 namespace StellarWP\Models;
 
 use Exception;
-use Faker\Generator;
 use StellarWP\DB\DB;
 
 /**
@@ -14,11 +13,6 @@ abstract class ModelFactory {
 	 * @var class-string<M>
 	 */
 	protected $model;
-
-	/**
-	 * @var Generator
-	 */
-	protected $faker;
 
 	/**
 	 * @var int The number of models to create.
@@ -34,7 +28,6 @@ abstract class ModelFactory {
 	 */
 	public function __construct( $model ) {
 		$this->model = $model;
-		$this->faker = $this->withFaker();
 	}
 
 	/**
@@ -90,15 +83,6 @@ abstract class ModelFactory {
 	 */
 	protected function makeInstance( array $attributes ) {
 		return new $this->model( array_merge( $this->definition(), $attributes ) );
-	}
-
-	/**
-	 * Get a new Faker instance.
-	 *
-	 * @since 1.0.0
-	 */
-	protected function withFaker() : Generator {
-		return new Generator();
 	}
 
 	/**
