@@ -19,11 +19,11 @@ interface Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes Attributes.
 	 *
-	 * @return self
+	 * @return Model
 	 */
-	public function fill( array $attributes ) : self;
+	public function fill( array $attributes ) : Model;
 
 	/**
 	 * Get an attribute from the model.
@@ -115,18 +115,21 @@ interface Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return $this
+	 * @param string $key   Attribute name.
+	 * @param mixed  $value Attribute value.
+	 *
+	 * @return Model
 	 */
-	public function setAttribute( string $key, $value ) : self;
+	public function setAttribute( string $key, $value ) : Model;
 
 	/**
 	 * Sync the original attributes with the current.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return $this
+	 * @return Model
 	 */
-	public function syncOriginal() : self;
+	public function syncOriginal() : Model;
 
 	/**
 	 * Dynamically retrieve attributes on the model.
