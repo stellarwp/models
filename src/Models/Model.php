@@ -12,28 +12,28 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * The model's attributes.
 	 *
-	 * @var array
+	 * @var array<string,mixed>
 	 */
 	protected $attributes = [];
 
 	/**
 	 * The model attribute's original state.
 	 *
-	 * @var array
+	 * @var array<string,mixed>
 	 */
 	protected $original = [];
 
 	/**
-	 * The model properties assigned to their types
+	 * The model properties assigned to their types.
 	 *
-	 * @var array
+	 * @var array<string,string>
 	 */
 	protected $properties = [];
 
 	/**
-	 * The model relationships assigned to their relationship types
+	 * The model relationships assigned to their relationship types.
 	 *
-	 * @var array
+	 * @var array<string,string>
 	 */
 	protected $relationships = [];
 
@@ -49,7 +49,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	public function __construct( array $attributes = [] ) {
 		$this->fill( array_merge( $this->getPropertyDefaults(), $attributes ) );
@@ -58,11 +58,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Fill the model with an array of attributes.
+	 * Fills the model with an array of attributes.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes Attributes.
 	 *
 	 * @return ModelInterface
 	 */
@@ -70,15 +70,16 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		foreach ( $attributes as $key => $value ) {
 			$this->setAttribute( $key, $value );
 		}
-		$this->attributes = $attributes;
 
 		return $this;
 	}
 
 	/**
-	 * Get an attribute from the model.
+	 * Returns an attribute from the model.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Attribute name.
 	 *
 	 * @return mixed
 	 *
@@ -91,11 +92,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Get the attributes that have been changed since last sync.
+	 * Returns the attributes that have been changed since last sync.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function getDirty() : array {
 		$dirty = [];
@@ -110,11 +111,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Get the model's original attribute values.
+	 * Returns the model's original attribute values.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $key
+	 * @param string|null $key Attribute name.
 	 *
 	 * @return mixed|array
 	 */
@@ -123,15 +124,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Get the default for a property if one is provided, otherwise default to null
+	 * Returns the default value for a property if one is provided, otherwise null.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param $key
+	 * @param string $key Property name.
 	 *
 	 * @return mixed|null
 	 */
-	protected function getPropertyDefault( $key ) {
+	protected function getPropertyDefault( string $key ) {
 		return is_array( $this->properties[ $key ] ) && isset( $this->properties[ $key ][1] )
 			? $this->properties[ $key ][1]
 			: null;
@@ -141,6 +142,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * Returns the defaults for all the properties. If a default is omitted it defaults to null.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	protected function getPropertyDefaults() : array {
 		$defaults = [];
@@ -156,7 +159,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
+	 * @param string $key Property name.
 	 *
 	 * @return string
 	 */
@@ -167,13 +170,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Returns a relationship.
+	 *
 	 * @since 1.0.0
 	 *
-	 * @param $key
+	 * @param string $key Relationship name.
 	 *
 	 * @return Model|Model[]
 	 */
-	protected function getRelationship( $key ) {
+	protected function getRelationship( string $key ) {
 		if ( ! is_callable( [ $this, $key ] ) ) {
 			$exception = Config::getInvalidArgumentException();
 			throw new $exception( "$key() does not exist." );
@@ -202,6 +207,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * Checks whether a relationship has already been loaded.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Relationship name.
+	 *
+	 * @return bool
 	 */
 	protected function hasCachedRelationship( string $key ) : bool {
 		return array_key_exists( $key, $this->cachedRelations );
@@ -212,7 +221,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
+	 * @param string $key Property name.
 	 *
 	 * @return bool
 	 */
@@ -225,7 +234,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $attribute
+	 * @param string|null $attribute Attribute name.
 	 *
 	 * @return bool
 	 */
@@ -238,7 +247,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $attribute
+	 * @param string|null $attribute Attribute name.
 	 *
 	 * @return bool
 	 */
@@ -251,12 +260,12 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Validate an attribute to a PHP type.
+	 * Validates an attribute to a PHP type.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
-	 * @param mixed  $value
+	 * @param string $key   Property name.
+	 * @param mixed  $value Property value.
 	 *
 	 * @return bool
 	 */
@@ -282,14 +291,18 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * @inheritDoc
+	 * Returns the object vars.
+	 *
+	 * @since 1.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function jsonSerialize() {
 		return get_object_vars( $this );
 	}
 
 	/**
-	 * Get the property keys.
+	 * Returns the property keys.
 	 *
 	 * @since 1.0.0
 	 *
@@ -300,7 +313,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Set an attribute on the model.
+	 * Sets an attribute on the model.
 	 *
 	 * @since 1.0.0
 	 *
@@ -319,7 +332,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Sync the original attributes with the current.
+	 * Syncs the original attributes with the current.
 	 *
 	 * @since 1.0.0
 	 *
@@ -332,7 +345,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Returns attributes.
+	 *
 	 * @since 1.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function toArray() : array {
 		return $this->attributes;
@@ -342,6 +359,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * Validates that the given property exists
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Property name.
 	 *
 	 * @return void
 	 */
@@ -357,8 +376,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
-	 * @param mixed  $value
+	 * @param string $key   Property name.
+	 * @param mixed  $value Property value.
 	 *
 	 * @return void
 	 */
@@ -372,9 +391,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Dynamically retrieve attributes on the model.
+	 * Dynamically retrieves attributes on the model.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Attribute name.
 	 *
 	 * @return mixed
 	 */
@@ -387,11 +408,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Determine if an attribute exists on the model.
+	 * Determines if an attribute exists on the model.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
+	 * @param string $key Attribute name.
 	 *
 	 * @return bool
 	 */
@@ -400,12 +421,12 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
-	 * Dynamically set attributes on the model.
+	 * Dynamically sets attributes on the model.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
-	 * @param mixed  $value
+	 * @param string $key   Attribute name.
+	 * @param mixed  $value Attribute value.
 	 *
 	 * @return void
 	 */
