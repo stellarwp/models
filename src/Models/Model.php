@@ -64,9 +64,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param array<string,mixed> $attributes Attributes.
 	 *
-	 * @return Model
+	 * @return ModelInterface
 	 */
-	public function fill( array $attributes ) : Model {
+	public function fill( array $attributes ) : ModelInterface {
 		foreach ( $attributes as $key => $value ) {
 			$this->setAttribute( $key, $value );
 		}
@@ -320,9 +320,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param string $key   Attribute name.
 	 * @param mixed  $value Attribute value.
 	 *
-	 * @return $this
+	 * @return ModelInterface
 	 */
-	public function setAttribute( string $key, $value ) : Model {
+	public function setAttribute( string $key, $value ) : ModelInterface {
 		$this->validatePropertyExists( $key );
 		$this->validatePropertyType( $key, $value );
 
@@ -336,9 +336,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return $this
+	 * @return ModelInterface
 	 */
-	public function syncOriginal() : Model {
+	public function syncOriginal() : ModelInterface {
 		$this->original = $this->attributes;
 
 		return $this;
