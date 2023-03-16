@@ -10,25 +10,27 @@ interface Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	public function __construct( array $attributes = [] );
 
 	/**
-	 * Fill the model with an array of attributes.
+	 * Fills the model with an array of attributes.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes Attributes.
 	 *
-	 * @return self
+	 * @return Model
 	 */
-	public function fill( array $attributes ) : self;
+	public function fill( array $attributes ) : Model;
 
 	/**
-	 * Get an attribute from the model.
+	 * Returns an attribute from the model.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Attribute name.
 	 *
 	 * @return mixed
 	 *
@@ -37,7 +39,7 @@ interface Model {
 	public function getAttribute( string $key );
 
 	/**
-	 * Get the attributes that have been changed since last sync.
+	 * Returns the attributes that have been changed since last sync.
 	 *
 	 * @since 1.0.0
 	 *
@@ -46,11 +48,11 @@ interface Model {
 	public function getDirty() : array;
 
 	/**
-	 * Get the model's original attribute values.
+	 * Returns the model's original attribute values.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $key
+	 * @param string|null $key Attribute name.
 	 *
 	 * @return mixed|array
 	 */
@@ -61,48 +63,48 @@ interface Model {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
+	 * @param string $key Property name.
 	 *
 	 * @return bool
 	 */
 	public function hasProperty( string $key ) : bool;
 
 	/**
-	 * Determine if a given attribute is clean.
+	 * Determines if a given attribute is clean.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $attribute
+	 * @param string|null $attribute Attribute name.
 	 *
 	 * @return bool
 	 */
 	public function isClean( string $attribute = null ) : bool;
 
 	/**
-	 * Determine if a given attribute is dirty.
+	 * Determines if a given attribute is dirty.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string|null $attribute
+	 * @param string|null $attribute Attribute name.
 	 *
 	 * @return bool
 	 */
 	public function isDirty( string $attribute = null ) : bool;
 
 	/**
-	 * Validate an attribute to a PHP type.
+	 * Validates an attribute to a PHP type.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
-	 * @param mixed  $value
+	 * @param string $key   Attribute name.
+	 * @param mixed  $value Attribute value.
 	 *
 	 * @return bool
 	 */
 	public function isPropertyTypeValid( string $key, $value ) : bool;
 
 	/**
-	 * Get the property keys.
+	 * Returns the property keys.
 	 *
 	 * @since 1.0.0
 	 *
@@ -111,50 +113,55 @@ interface Model {
 	public static function propertyKeys() : array;
 
 	/**
-	 * Set an attribute on the model.
+	 * Sets an attribute on the model.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return $this
+	 * @param string $key   Attribute name.
+	 * @param mixed  $value Attribute value.
+	 *
+	 * @return Model
 	 */
-	public function setAttribute( string $key, $value ) : self;
+	public function setAttribute( string $key, $value ) : Model;
 
 	/**
-	 * Sync the original attributes with the current.
+	 * Syncs the original attributes with the current.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return $this
+	 * @return Model
 	 */
-	public function syncOriginal() : self;
+	public function syncOriginal() : Model;
 
 	/**
-	 * Dynamically retrieve attributes on the model.
+	 * Dynamically retrieves attributes on the model.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @param string $key Attribute name.
 	 *
 	 * @return mixed
 	 */
 	public function __get( string $key );
 
 	/**
-	 * Determine if an attribute exists on the model.
+	 * Determines if an attribute exists on the model.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
+	 * @param string $key Attribute name.
 	 *
 	 * @return bool
 	 */
 	public function __isset( string $key );
 
 	/**
-	 * Dynamically set attributes on the model.
+	 * Dynamically sets attributes on the model.
 	 *
 	 * @since 1.0.0
 	 *
-	 * @param string $key
-	 * @param mixed  $value
+	 * @param string $key   Attribute name.
+	 * @param mixed  $value Attribute value.
 	 *
 	 * @return void
 	 */

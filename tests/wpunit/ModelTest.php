@@ -7,13 +7,13 @@ use StellarWP\Models\Tests\MockModel;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
 /**
- * @since 2.20.1
+ * @since 1.0.0
  *
  * @coversDefaultClass Model
  */
 class TestModel extends ModelsTestCase {
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -28,7 +28,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.0
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -42,7 +42,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -55,7 +55,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -80,7 +80,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -93,7 +93,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -105,7 +105,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -116,7 +116,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since        2.20.1
+	 * @since 1.0.0
 	 *
 	 * @dataProvider invalidTypeProvider
 	 *
@@ -129,7 +129,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -151,7 +151,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -172,7 +172,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -183,7 +183,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -222,7 +222,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return void
 	 */
@@ -234,7 +234,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.0
+	 * @since 1.0.0
 	 */
 	public function testModelRelationsShouldBeCached() {
 		$model = new MockModelWithRelationship();
@@ -245,7 +245,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.22.3
+	 * @since 1.0.0
 	 */
 	public function testShouldThrowExceptionForGettingMissingProperty() {
 		$this->expectException( Config::getInvalidArgumentException() );
@@ -256,7 +256,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.22.3
+	 * @since 1.0.0
 	 */
 	public function testShouldThrowExceptionForSettingMissingProperty() {
 		$this->expectException( Config::getInvalidArgumentException() );
@@ -267,7 +267,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @since 2.20.1
+	 * @since 1.0.0
 	 *
 	 * @return array
 	 */
