@@ -70,7 +70,6 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		foreach ( $attributes as $key => $value ) {
 			$this->setAttribute( $key, $value );
 		}
-		$this->attributes = $attributes;
 
 		return $this;
 	}
