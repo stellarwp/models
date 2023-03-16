@@ -70,6 +70,20 @@ class TestModel extends ModelsTestCase {
 	 *
 	 * @return void
 	 */
+	public function testGetAttributeShouldReturnCustomDefaultValue() {
+		$model = new MockModel( [ 'id' => 1 ] );
+
+		$this->assertEquals(
+			'shakalaka',
+			$model->getAttribute( 'lastName', 'shakalaka' )
+		);
+	}
+
+	/**
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
 	public function testGetAttributeShouldThrowInvalidArgumentException() {
 		$this->expectException( Config::getInvalidArgumentException() );
 
