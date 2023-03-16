@@ -66,6 +66,20 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
+	 * @since 1.0.0
+	 *
+	 * @return void
+	 */
+	public function testGetAttributeShouldReturnCustomDefaultValue() {
+		$model = new MockModel( [ 'id' => 1 ] );
+
+		$this->assertEquals(
+			'shakalaka',
+			$model->getAttribute( 'lastName', 'shakalaka' )
+		);
+	}
+
+	/**
 	 * @since 2.20.1
 	 *
 	 * @return void

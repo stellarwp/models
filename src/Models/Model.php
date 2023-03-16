@@ -80,14 +80,17 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
+	 * @param string $key     Attribute name.
+	 * @param mixed  $default Default value. Default is null.
+	 *
 	 * @return mixed
 	 *
 	 * @throws RuntimeException
 	 */
-	public function getAttribute( string $key ) {
+	public function getAttribute( string $key, $default = null ) {
 		$this->validatePropertyExists( $key );
 
-		return $this->attributes[ $key ] ?? null;
+		return $this->attributes[ $key ] ?? $default;
 	}
 
 	/**
