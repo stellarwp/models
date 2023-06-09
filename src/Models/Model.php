@@ -205,6 +205,19 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Returns true if an attribute exists. Otherwise, false.
+	 *
+	 * @since 1.1.0
+	 *
+	 * @param string $key Attribute name.
+	 *
+	 * @return bool
+	 */
+	protected function hasAttribute( string $key ) : bool {
+		return array_key_exists( $key, $this->attributes );
+	}
+
+	/**
 	 * Checks whether a relationship has already been loaded.
 	 *
 	 * @since 1.0.0
@@ -326,6 +339,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public function setAttribute( string $key, $value ) : ModelInterface {
 		$this->validatePropertyExists( $key );
 		$this->validatePropertyType( $key, $value );
+
+		$validation_method = 'validate_' . $key;
+		if ( method_exists( $this, $validation_method ) ) {
+			$this->$validation_method( $value );
+		}
 
 		$this->attributes[ $key ] = $value;
 

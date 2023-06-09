@@ -183,6 +183,48 @@ class Breakfast_Model extends Model implements Contracts\ModelCrud {
 }
 ```
 
+## Attribute validation
+
+Sometimes it would be helpful to validate attributes that are set in the model. To do that, you can create `validate_*()`
+methods that will execute any time an attribute is set.
+
+Here's an example:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+
+class Breakfast_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected $properties = [
+		'id'        => 'int',
+		'name'      => 'string',
+		'price'     => 'float',
+		'num_eggs'  => 'int',
+		'has_bacon' => 'bool',
+	];
+
+	/**
+	 * Validate the name.
+	 *
+	 * @param string $value
+	 *
+	 * @return bool
+	 */
+	public function validate_name( $value ): bool {
+		if ( ! preg_match( '/eggs/i', $value ) ) {
+			throw new \Exception( 'Breakfasts must have "eggs" in the name!' );
+		}
+
+		return true;
+	}
+}
+
+```
+
 ## Data Transfer Objects
 
 Data Transfer Objects (DTOs) are classes that help with the translation of database query results (or other sources of data)
