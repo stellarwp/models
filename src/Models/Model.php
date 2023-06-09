@@ -351,6 +351,23 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Sets multiple attributes on the model.
+	 *
+	 * @since 1.2.0
+	 *
+	 * @param array<string,mixed> $attributes Attributes to set.
+	 *
+	 * @return ModelInterface
+	 */
+	public function setAttributes( array $attributes ) : ModelInterface {
+		foreach ( $attributes as $key => $value ) {
+			$this->setAttribute( $key, $value );
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Syncs the original attributes with the current.
 	 *
 	 * @since 1.0.0
