@@ -266,6 +266,17 @@ class TestModel extends ModelsTestCase {
 		$model->iDontExist = 'foo';
 	}
 
+	public function testShouldSetMultipleAttributes() {
+		$model = new MockModel();
+		$model->setAttributes( [
+			'firstName' => 'Luke',
+			'lastName'  => 'Skywalker',
+		] );
+
+		$this->assertEquals( 'Luke', $model->firstName );
+		$this->assertEquals( 'Skywalker', $model->lastName );
+	}
+
 	/**
 	 * @since 1.0.0
 	 *
