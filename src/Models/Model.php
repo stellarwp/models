@@ -149,6 +149,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	protected function getPropertyDefaults() : array {
 		$defaults = [];
 		foreach ( array_keys( $this->properties ) as $property ) {
+			// @todo This could be an edge case bug, we shouldn't assume `null` is always a valid default value.
 			$defaults[ $property ] = $this->getPropertyDefault( $property );
 		}
 
@@ -327,9 +328,47 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Will infer the type based on the property definition and
+	 * cast the type on the value passed in.
+	 *
+	 * @since TBD
+	 *
+	 * @param string $key   The property name.
+	 * @param mixed  $value The value to be cast.
+	 *
+	 * @return array|bool|int|string The $value after being cast to it's type.
+	 */
+	protected function castAttribute( string $key, $value ) {
+		// Handle nullable fields as expected.
+		if ( is_null( $value ) ) {
+			return null;
+		}
+
+		$type = $this->getPropertyType( $key );
+
+		switch ( $type ) {
+			case 'int':
+				return (int) $value;
+			case 'string':
+				return (string) $value;
+			case 'bool':
+				return (bool) $value;
+			case 'array':
+				return (array) $value;
+			case 'date':
+				return is_string( $value ) ? $value : $value->format( 'Y-m-d' );
+			case 'datetime':
+				return is_string( $value ) ? $value : $value->format( 'Y-m-d H:i:s' );
+			default:
+				return $value;
+		}
+	}
+
+	/**
 	 * Sets an attribute on the model.
 	 *
 	 * @since 1.0.0
+	 * @since TBD No longer throws Exceptions with a default type validator. Use custom validators instead.
 	 *
 	 * @param string $key   Attribute name.
 	 * @param mixed  $value Attribute value.
@@ -344,7 +383,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			$this->$validation_method( $value );
 		}
 
-		$this->attributes[ $key ] = $value;
+		$this->attributes[ $key ] = $this->castAttribute( $key, $value );
 
 		return $this;
 	}
