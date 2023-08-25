@@ -338,7 +338,6 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 */
 	public function setAttribute( string $key, $value ) : ModelInterface {
 		$this->validatePropertyExists( $key );
-		$this->validatePropertyType( $key, $value );
 
 		$validation_method = 'validate_' . $key;
 		if ( method_exists( $this, $validation_method ) ) {
