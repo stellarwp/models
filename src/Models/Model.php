@@ -3,6 +3,7 @@
 namespace StellarWP\Models;
 
 use JsonSerializable;
+use ReturnTypeWillChange;
 use RuntimeException;
 use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
@@ -298,6 +299,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 */
+	#[ReturnTypeWillChange]
 	public function jsonSerialize() {
 		return get_object_vars( $this );
 	}
