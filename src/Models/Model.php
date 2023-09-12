@@ -40,7 +40,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
 	 *
-	 * @var Model[]
+	 * @var array<string,object|object[]>
 	 */
 	private $cachedRelations = [];
 
@@ -177,7 +177,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param string $key Relationship name.
 	 *
-	 * @return Model|Model[]
+	 * @return object|object[]|null
 	 */
 	protected function getRelationship( string $key ) {
 		if ( ! is_callable( [ $this, $key ] ) ) {
