@@ -125,6 +125,19 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Check if there is a default value for a property.
+	 *
+	 * @since TBD
+	 *
+	 * @param string $key Property name.
+	 *
+	 * @return bool
+	 */
+	public function hasDefault( string $key ): bool {
+		return is_array( $this->properties[ $key ] ) && array_key_exists( 1, $this->properties[ $key ] );
+	}
+
+	/**
 	 * Returns the default value for a property if one is provided, otherwise null.
 	 *
 	 * @since 1.0.0
@@ -134,9 +147,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return mixed|null
 	 */
 	protected function getPropertyDefault( string $key ) {
-		return is_array( $this->properties[ $key ] ) && isset( $this->properties[ $key ][1] )
-			? $this->properties[ $key ][1]
-			: null;
+		if ( $this->hasDefault( $key ) ) {
+			return $this->properties[ $key ][1];
+		}
+
+		return null;
 	}
 
 	/**
@@ -149,7 +164,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	protected function getPropertyDefaults() : array {
 		$defaults = [];
 		foreach ( array_keys( $this->properties ) as $property ) {
-			$defaults[ $property ] = $this->getPropertyDefault( $property );
+			if ( $this->hasDefault( $property ) ) {
+				$defaults[ $property ] = $this->getPropertyDefault( $property );
+			}
 		}
 
 		return $defaults;

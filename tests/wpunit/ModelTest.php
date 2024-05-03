@@ -278,6 +278,18 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	public function testHasDefaultValue() {
+		$model = new MockModel();
+		$this->assertTrue( $model->hasDefault( 'firstName' ) );
+		$this->assertTrue( $model->hasDefault( 'emails' ) );
+		$this->assertFalse( $model->hasDefault( 'lastName' ) );
+	}
+
+	/**
 	 * @since 1.0.0
 	 *
 	 * @return array
