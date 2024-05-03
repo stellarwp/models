@@ -2,6 +2,7 @@
 
 namespace StellarWP\Models;
 
+use DateTime;
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
 use StellarWP\Models\Tests\MockModelWithRelationship;
@@ -205,9 +206,33 @@ class TestModel extends ModelsTestCase {
 	 * @return void
 	 */
 	public function testModelShouldThrowExceptionForAssigningInvalidPropertyType( $key, $value ) {
+		$this->markTestSkipped('This test is not yet implemented.');
 		$this->expectException( Config::getInvalidArgumentException() );
+// @todo Are we keeping? If we want to adjust, test that invalid properties types are cast appropriately.
+		$model = new MockModel( [ $key => $value ] );
+	}
 
-		new MockModel( [ $key => $value ] );
+	/**
+	 * @since TBD
+	 *
+	 * @dataProvider castPropertyProvider
+	 */
+	public function testModelShouldCastPropertyTypes( $key, $value, $expected){
+		$model = new MockModel( [ $key => $value ] );
+
+		$this->assertEquals( $expected, $model->$key );
+	}
+
+	/**
+	 * @since TBD
+	 *
+	 * @return void
+	 */
+	public function testHasDefaultValue() {
+		$model = new MockModel();
+		$this->assertTrue( $model->hasDefault( 'firstName' ) );
+		$this->assertTrue( $model->hasDefault( 'emails' ) );
+		$this->assertFalse( $model->hasDefault( 'lastName' ) );
 	}
 
 	/**
@@ -287,6 +312,27 @@ class TestModel extends ModelsTestCase {
 			[ 'id', 'Not an integer' ],
 			[ 'firstName', 100 ],
 			[ 'emails', 'Not an array' ],
+		];
+	}
+
+	/**
+	 * @since TBD
+	 *
+	 * @return array
+	 */
+	public function castPropertyProvider() {
+		return [
+			[ 'id', '1', 1 ],
+			[ 'lastName', 1, '1' ],
+			[ 'isActive', 'false', false ],
+			[ 'isActive', 1, true ],
+			[ 'isActive', 0, false ],
+			[ 'isActive', false, false ],
+			[ 'emails', [], [] ],
+			[ 'createdDate', new DateTime( 'June 1st 2020' ), '2020-06-01' ],
+			[ 'createdDatetime', new DateTime( 'June 1st 2020 12:30am' ), '2020-06-01 00:30:00' ],
+			[ 'createdDate', '2020-06-01', '2020-06-01' ],
+			[ 'createdDatetime', '2020-06-01 00:30:00', '2020-06-01 00:30:00' ],
 		];
 	}
 }

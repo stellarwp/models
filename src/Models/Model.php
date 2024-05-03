@@ -140,6 +140,19 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Check if there is a default value for a property.
+	 *
+	 * @since TBD
+	 *
+	 * @param string $key Property name.
+	 *
+	 * @return bool
+	 */
+	public function hasDefault( string $key ): bool {
+		return is_array( $this->properties[ $key ] ) && array_key_exists( 1, $this->properties[ $key ] );
+	}
+
+	/**
 	 * Returns the defaults for all the properties. If a default is omitted it defaults to null.
 	 *
 	 * @since 1.0.0
@@ -150,7 +163,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$defaults = [];
 		foreach ( array_keys( $this->properties ) as $property ) {
 			// @todo This could be an edge case bug, we shouldn't assume `null` is always a valid default value.
-			$defaults[ $property ] = $this->getPropertyDefault( $property );
+			// @todo Sometimes `null` is a valid default, but sometimes we want to allow for the MySQL default to take precedence (which requires no value set).
+			if ( $this->hasDefault( $property ) ) {
+				$defaults[ $property ] = $this->getPropertyDefault( $property );
+			}
 		}
 
 		return $defaults;
@@ -336,7 +352,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param string $key   The property name.
 	 * @param mixed  $value The value to be cast.
 	 *
-	 * @return array|bool|int|string The $value after being cast to it's type.
+	 * @return mixed The $value after being cast to it's type.
 	 */
 	protected function castAttribute( string $key, $value ) {
 		// Handle nullable fields as expected.
@@ -347,19 +363,16 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$type = $this->getPropertyType( $key );
 
 		switch ( $type ) {
-			case 'int':
-				return (int) $value;
-			case 'string':
-				return (string) $value;
 			case 'bool':
-				return (bool) $value;
-			case 'array':
-				return (array) $value;
+				// We want to convert "false" string to false.
+				return filter_var( $value, FILTER_VALIDATE_BOOLEAN );
 			case 'date':
 				return is_string( $value ) ? $value : $value->format( 'Y-m-d' );
 			case 'datetime':
 				return is_string( $value ) ? $value : $value->format( 'Y-m-d H:i:s' );
 			default:
+				settype( $value, $type );
+
 				return $value;
 		}
 	}

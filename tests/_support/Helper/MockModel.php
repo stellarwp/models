@@ -10,5 +10,8 @@ class MockModel extends Model {
 		'firstName' => [ 'string', 'Michael' ],
 		'lastName'  => 'string',
 		'emails'    => [ 'array', [] ],
+		'isActive' => 'bool',
+		'createdDatetime' => 'datetime',
+		'createdDate' => 'date',
 	];
 }
