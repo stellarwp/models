@@ -125,6 +125,18 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Whether the property is set or not. This is different from isset() because this considers a `null` value as
+	 * being set. Defaults are considered set as well.
+	 *
+	 * @since TBD
+	 *
+	 * @return boolean
+	 */
+	public function isSet( string $key ): bool {
+		return array_key_exists( $key, $this->attributes ) || $this->hasDefault( $key );
+	}
+
+	/**
 	 * Check if there is a default value for a property.
 	 *
 	 * @since TBD
@@ -133,7 +145,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function hasDefault( string $key ): bool {
+	protected function hasDefault( string $key ): bool {
 		return is_array( $this->properties[ $key ] ) && array_key_exists( 1, $this->properties[ $key ] );
 	}
 
