@@ -128,7 +128,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * Whether the property is set or not. This is different from isset() because this considers a `null` value as
 	 * being set. Defaults are considered set as well.
 	 *
-	 * @since TBD
+	 * @unreleased
 	 *
 	 * @return boolean
 	 */
@@ -139,7 +139,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Check if there is a default value for a property.
 	 *
-	 * @since TBD
+	 * @unreleased
 	 *
 	 * @param string $key Property name.
 	 *
