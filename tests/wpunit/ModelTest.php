@@ -278,6 +278,25 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
+	 * @unreleased
+	 *
+	 * @return void
+	 */
+	public function testIsSet() {
+		$model = new MockModel();
+
+		// This has a default so we should see as set.
+		$this->assertTrue( $model->isSet( 'firstName' ) );
+
+		// No default, and hasn't been set so show false.
+		$this->assertFalse( $model->isSet( 'lastName' ) );
+
+		// Now we set it, so it should be true - even though we set it to null.
+		$model->lastName = null;
+		$this->assertTrue( $model->isSet( 'lastName' ) );
+	}
+
+	/**
 	 * @since 1.0.0
 	 *
 	 * @return array
