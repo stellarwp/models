@@ -330,6 +330,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 				return is_array( $value );
 			case 'float':
 				return is_float( $value );
+			case 'numeric':
+				return is_numeric( $value );
 			default:
 				return $value instanceof $type;
 		}
