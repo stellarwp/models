@@ -11,6 +11,6 @@ class MockModel extends Model {
 		'lastName'     => 'string',
 		'emails'       => [ 'array', [] ],
 		'microseconds' => 'float',
-		'number'       => 'numeric',
+		'number'       => 'number',
 	];
 }
