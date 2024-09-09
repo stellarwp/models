@@ -306,6 +306,8 @@ class TestModel extends ModelsTestCase {
 			[ 'id', 'Not an integer' ],
 			[ 'firstName', 100 ],
 			[ 'emails', 'Not an array' ],
+			[ 'microseconds', 'Not a float' ],
+			[ 'number', '12' ] // numeric strings do not work; must be int or float
 		];
 	}
 }
