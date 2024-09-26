@@ -58,7 +58,7 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @return M|null
 	 */
-	public function get( $output = OBJECT ) {
+	public function get( $output = OBJECT ): ?Model {
 		$row = DB::get_row( $this->getSQL(), OBJECT );
 
 		if ( ! $row ) {
