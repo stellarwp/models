@@ -9,8 +9,8 @@ use StellarWP\DB\QueryBuilder\Clauses\RawSQL;
 use StellarWP\Models\Model;
 
 /**
+ * @since 1.2.2  improve model generic
  * @since 1.0.0
- * @unreleased improve model generic
  *
  * @template M of Model
  */
