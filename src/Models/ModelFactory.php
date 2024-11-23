@@ -2,6 +2,7 @@
 
 namespace StellarWP\Models;
 
+use Closure;
 use Exception;
 use StellarWP\DB\DB;
 
@@ -54,6 +55,18 @@ abstract class ModelFactory {
 	}
 
 	/**
+	 * @unreleased
+	 */
+	public function makeAndResolveTo($property): Closure
+	{
+		return function() use ($property) {
+			return is_array($results = $this->make())
+				? array_column($results, $property)
+				: $results->$property;
+		};
+	}
+
+	/**
 	 * @since 1.0.0
 	 *
 	 * @param array $attributes
@@ -75,14 +88,29 @@ abstract class ModelFactory {
 	}
 
 	/**
+	 * @unreleased
+	 */
+	public function createAndResolveTo($property): Closure
+	{
+		return function() use ($property) {
+			return is_array($results = $this->create())
+				? array_column($results, $property)
+				: $results->$property;
+		};
+	}
+
+	/**
 	 * Creates an instance of the model from the attributes and definition.
 	 *
+	 * @unreleased Add support for resolving Closures.
 	 * @since 1.0.0
 	 *
 	 * @return M
 	 */
 	protected function makeInstance( array $attributes ) {
-		return new $this->model( array_merge( $this->definition(), $attributes ) );
+		return new $this->model(array_map(function($attribute) {
+			return $attribute instanceof Closure ? $attribute() : $attribute;
+		}, array_merge($this->definition(), $attributes)));
 	}
 
 	/**
