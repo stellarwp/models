@@ -278,7 +278,7 @@ class TestModel extends ModelsTestCase {
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 *
 	 * @return void
 	 */

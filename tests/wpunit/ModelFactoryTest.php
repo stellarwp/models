@@ -6,14 +6,14 @@ use Exception;
 use StellarWP\Models\Tests\ModelsTestCase;
 
 /**
- * @unreleased
+ * @since 1.2.3
  *
  * @coversDefaultClass \StellarWP\Models\ModelFactory
  */
 class ModelFactoryTest extends ModelsTestCase
 {
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function setUp()
 	{
@@ -22,7 +22,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testDefinitionAsAttributes()
 	{
@@ -40,7 +40,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testPassedAttributesOverrideDefinition()
 	{
@@ -60,7 +60,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testResolvesCallableDefinitions()
 	{
@@ -80,7 +80,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testDoesNotResolveCallableWhenPassedAttribute()
 	{
@@ -102,7 +102,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testMakeResolvesDependencyDefinition()
 	{
@@ -130,7 +130,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testMakeResolvesDependencyDefinitionWithCount()
 	{
@@ -161,7 +161,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testMakeDoesNotResolveDependencyWhenPassedAttribute()
 	{
@@ -196,7 +196,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testCreateResolvesDependencyDefinition()
 	{
@@ -224,7 +224,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testCreateResolvesDependencyDefinitionWithCount()
 	{
@@ -254,7 +254,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testCreateDoesNotResolveDependencyWhenPassedAttribute()
 	{
@@ -289,7 +289,7 @@ class ModelFactoryTest extends ModelsTestCase
 	}
 
 	/**
-	 * @unreleased
+	 * @since 1.2.3
 	 */
 	public function testDoesNotResolveInvokableClasses()
 	{
@@ -312,7 +312,7 @@ class ModelFactoryTest extends ModelsTestCase
 }
 
 /**
- * @unreleased
+ * @since 1.2.3
  *
  * @property int $id
  */
@@ -335,7 +335,7 @@ class MockModel extends Model
 }
 
 /**
- * @unreleased
+ * @since 1.2.3
  *
  * @property int $id
  * @property int $nestedId
@@ -349,7 +349,7 @@ class MockModelWithDependency extends MockModel
 }
 
 /**
- * @unreleased
+ * @since 1.2.3
  */
 abstract class MockInvokableClass
 {
@@ -357,7 +357,7 @@ abstract class MockInvokableClass
 }
 
 /**
- * @unreleased
+ * @since 1.2.3
  *
  * @property MockInvokableClass $invokable
  */
