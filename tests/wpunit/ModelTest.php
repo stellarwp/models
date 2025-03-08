@@ -110,9 +110,7 @@ class TestModel extends ModelsTestCase {
 	 * @return void
 	 */
 	public function testIsPropertyTypeValidShouldReturnTrueWhenPropertyIsValid() {
-		$model = new MockModel();
-
-		$this->assertTrue( $model->isPropertyTypeValid( 'id', 1 ) );
+		$this->assertTrue( MockModel::isPropertyTypeValid( 'id', 1 ) );
 	}
 
 	/**
@@ -123,9 +121,7 @@ class TestModel extends ModelsTestCase {
 	 * @return void
 	 */
 	public function testIsPropertyTypeValidShouldReturnFalseWhenPropertyIsInValid( $key, $value ) {
-		$model = new MockModel();
-
-		$this->assertFalse( $model->isPropertyTypeValid( $key, $value ) );
+		$this->assertFalse( MockModel::isPropertyTypeValid( $key, $value ) );
 	}
 
 	/**

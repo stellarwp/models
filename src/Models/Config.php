@@ -103,4 +103,8 @@ class Config {
 
 		static::$invalidArgumentException = $class;
 	}
+
+	public static function throwInvalidArgumentException( string $message ) {
+		throw new static::$invalidArgumentException( $message );
+	}
 }

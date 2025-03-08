@@ -61,13 +61,14 @@ interface Model {
 	/**
 	 * Determines if the model has the given property.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key Property name.
 	 *
 	 * @return bool
 	 */
-	public function hasProperty( string $key ) : bool;
+	public static function hasProperty( string $key ) : bool;
 
 	/**
 	 * Determines if a given attribute is clean.
@@ -94,6 +95,7 @@ interface Model {
 	/**
 	 * Validates an attribute to a PHP type.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key   Attribute name.
@@ -101,11 +103,12 @@ interface Model {
 	 *
 	 * @return bool
 	 */
-	public function isPropertyTypeValid( string $key, $value ) : bool;
+	public static function isPropertyTypeValid( string $key, $value ) : bool;
 
 	/**
 	 * Returns the property keys.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @return int[]|string[]
