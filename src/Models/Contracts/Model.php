@@ -61,6 +61,7 @@ interface Model {
 	/**
 	 * Determines if the model has the given property.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key Property name.
@@ -94,6 +95,7 @@ interface Model {
 	/**
 	 * Validates an attribute to a PHP type.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key   Attribute name.
@@ -106,6 +108,7 @@ interface Model {
 	/**
 	 * Returns the property keys.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @return int[]|string[]

@@ -87,7 +87,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @throws RuntimeException
 	 */
 	public function getAttribute( string $key, $default = null ) {
-		$this->validatePropertyExists( $key );
+		static::validatePropertyExists( $key );
 
 		return $this->attributes[ $key ] ?? $default;
 	}
@@ -139,6 +139,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Check if there is a default value for a property.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.2.2
 	 *
 	 * @param string $key Property name.
@@ -152,6 +153,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Returns the default value for a property if one is provided, otherwise null.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key Property name.
@@ -169,6 +171,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Returns the defaults for all the properties. If a default is omitted it defaults to null.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @return array<string,mixed>
@@ -262,6 +265,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Determines if the model has the given property.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key Property name.
@@ -305,6 +309,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Validates an attribute to a PHP type.
 	 *
+	 * @since 2.0.0
 	 * @since 1.0.0
 	 *
 	 * @param string $key   Property name.
@@ -428,14 +433,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Validates that the given property exists
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key Property name.
 	 *
 	 * @return void
 	 */
-	protected function validatePropertyExists( string $key ) {
-		if ( ! $this->hasProperty( $key ) ) {
+	protected static function validatePropertyExists( string $key ) {
+		if ( ! static::hasProperty( $key ) ) {
 			$exception = Config::getInvalidArgumentException();
 			throw new $exception( "Invalid property. '$key' does not exist." );
 		}
@@ -444,6 +450,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Validates that the given value is a valid type for the given property.
 	 *
+	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
 	 * @param string $key   Property name.
