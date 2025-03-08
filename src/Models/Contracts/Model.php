@@ -67,7 +67,7 @@ interface Model {
 	 *
 	 * @return bool
 	 */
-	public function hasProperty( string $key ) : bool;
+	public static function hasProperty( string $key ) : bool;
 
 	/**
 	 * Determines if a given attribute is clean.
@@ -101,7 +101,7 @@ interface Model {
 	 *
 	 * @return bool
 	 */
-	public function isPropertyTypeValid( string $key, $value ) : bool;
+	public static function isPropertyTypeValid( string $key, $value ) : bool;
 
 	/**
 	 * Returns the property keys.
