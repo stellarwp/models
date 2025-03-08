@@ -68,11 +68,12 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 2.0.0 changed to static
 	 *
 	 * @param string $type
-	 * @param mixed  $value
+	 * @param mixed  $value The query data value to cast, probably a string.
+	 * @param string $property The property being casted.
 	 *
 	 * @return mixed
 	 */
-	protected static function castValueForProperty( string $type, $value ) {
+	protected static function castValueForProperty( string $type, $value, string $property ) {
 		switch ( $type ) {
 			case 'int':
 				return (int) $value;
@@ -390,7 +391,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * Constructs a model instance from database query data.
 	 *
 	 * @param object|array $queryData
-	 * @param int $mode The level of strictness to take when constructing the object
+	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
 	 * @return static
 	 */
 	public static function fromQueryData($queryData, $mode = self::BUILD_MODE_IGNORE_EXTRA): static {
@@ -423,7 +424,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			}
 
 			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
-			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $queryData[$key]));
+			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $queryData[$key], $key));
 		}
 
 		return $instance;
