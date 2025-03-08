@@ -105,7 +105,7 @@ class ModelQueryBuilder extends QueryBuilder {
 			throw new InvalidArgumentException( "fromQueryBuilderObject missing from $model" );
 		}
 
-		return $model::fromQueryBuilderObject( $row );
+		return $model::fromQueryData( $row );
 	}
 
 	/**

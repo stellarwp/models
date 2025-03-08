@@ -9,6 +9,10 @@ use StellarWP\Models\Contracts\Model as ModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
 
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
+	public const BUILD_MODE_STRICT = 0;
+	public const BUILD_MODE_IGNORE_MISSING = 1;
+	public const BUILD_MODE_IGNORE_EXTRA = 2;
+
 	/**
 	 * The model's attributes.
 	 *
@@ -55,6 +59,34 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$this->fill( array_merge( static::getPropertyDefaults(), $attributes ) );
 
 		$this->syncOriginal();
+	}
+
+	/**
+	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
+	 * additional types, especially class types, this method can be overridden.
+	 *
+	 * @since 2.0.0 changed to static
+	 *
+	 * @param string $type
+	 * @param mixed  $value
+	 *
+	 * @return mixed
+	 */
+	protected static function castValueForProperty( string $type, $value ) {
+		switch ( $type ) {
+			case 'int':
+				return (int) $value;
+			case 'string':
+				return (string) $value;
+			case 'bool':
+				return (bool) $value;
+			case 'array':
+				return (array) $value;
+			case 'float':
+				return (float) $value;
+			default:
+				Config::throwInvalidArgumentException( "Unexpected type: '$type'. To support additional types, implement a custom castValueForProperty() method." );
+		}
 	}
 
 	/**
@@ -352,6 +384,49 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	#[\ReturnTypeWillChange]
 	public function jsonSerialize() {
 		return get_object_vars( $this );
+	}
+
+	/**
+	 * Constructs a model instance from database query data.
+	 *
+	 * @param object|array $queryData
+	 * @param int $mode The level of strictness to take when constructing the object
+	 * @return static
+	 */
+	public static function fromQueryData($queryData, $mode = self::BUILD_MODE_IGNORE_EXTRA): static {
+		if ( ! is_object( $queryData ) && ! is_array( $queryData ) ) {
+			Config::throwInvalidArgumentException( 'Query data must be an object or array' );
+		}
+
+		$queryData = (array) $queryData;
+
+		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
+			$extraKeys = array_diff_key( (array) $queryData, static::$properties );
+			if ( ! empty( $extraKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
+			}
+		}
+
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
+			$missingKeys = array_diff_key( static::$properties, (array) $queryData );
+			if ( ! empty( $missingKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
+			}
+		}
+
+		$instance = new static();
+
+		foreach (static::$properties as $key => $type) {
+			if ( ! array_key_exists( $key, $queryData ) ) {
+				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
+			}
+
+			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
+			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $queryData[$key]));
+		}
+
+		return $instance;
 	}
 
 	/**
