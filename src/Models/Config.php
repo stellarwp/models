@@ -104,7 +104,16 @@ class Config {
 		static::$invalidArgumentException = $class;
 	}
 
-	public static function throwInvalidArgumentException( string $message ) {
+	/**
+	 * Convenience method for throwing the InvalidArgumentException.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $message
+	 *
+	 * @return void
+	 */
+	public static function throwInvalidArgumentException( string $message ): void {
 		throw new static::$invalidArgumentException( $message );
 	}
 }
