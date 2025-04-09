@@ -6,15 +6,17 @@ use InvalidArgumentException;
 use StellarWP\DB\DB;
 use StellarWP\DB\QueryBuilder\QueryBuilder;
 use StellarWP\DB\QueryBuilder\Clauses\RawSQL;
-use StellarWP\Models\Model;
-
+use StellarWP\Models\Contracts\Model;
+use StellarWP\Models\Contracts\ModelBuildsFromQueryData;
 /**
  * @since 1.2.2  improve model generic
  * @since 1.0.0
  *
- * @template M of Model
+ * @template M of ModelBuildsFromQueryData
  */
 class ModelQueryBuilder extends QueryBuilder {
+	public const MODEL = 'model';
+
 	/**
 	 * @var class-string<M>
 	 */
@@ -24,8 +26,8 @@ class ModelQueryBuilder extends QueryBuilder {
 	 * @param class-string<M> $modelClass
 	 */
 	public function __construct( string $modelClass ) {
-		if ( ! is_subclass_of( $modelClass, Model::class ) ) {
-			throw new InvalidArgumentException( "$modelClass must be an instance of " . Model::class );
+		if ( ! is_subclass_of( $modelClass, ModelBuildsFromQueryData::class ) ) {
+			throw new InvalidArgumentException( "$modelClass must implement " . ModelBuildsFromQueryData::class );
 		}
 
 		$this->model = $modelClass;
@@ -58,14 +60,18 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @return M|null
 	 */
-	public function get( $output = OBJECT ): ?Model {
-		$row = DB::get_row( $this->getSQL(), OBJECT );
+	public function get( $output = self::MODEL ): ?Model {
+		if ( $output !== self::MODEL ) {
+			return parent::get( $output );
+		}
+
+		$row = DB::get_row( $this->getSQL() );
 
 		if ( ! $row ) {
 			return null;
 		}
 
-		return $this->getRowAsModel( $row );
+		return $this->model::fromQueryData( $row );
 	}
 
 	/**
@@ -75,58 +81,17 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @return M[]|null
 	 */
-	public function getAll( $output = OBJECT ) : ?array {
-		$results = DB::get_results( $this->getSQL(), OBJECT );
+	public function getAll( $output = self::MODEL ) : ?array {
+		if ( $output !== self::MODEL ) {
+			return parent::getAll( $output );
+		}
+
+		$results = DB::get_results( $this->getSQL() );
 
 		if ( ! $results ) {
 			return null;
 		}
 
-		if ( isset( $this->model ) ) {
-			return $this->getAllAsModel( $results );
-		}
-
-		return $results;
-	}
-
-	/**
-	 * Get row as model
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param object|null $row
-	 *
-	 * @return M|null
-	 */
-	protected function getRowAsModel( $row ) {
-		$model = $this->model;
-
-		if ( ! method_exists( $model, 'fromQueryBuilderObject' ) ) {
-			throw new InvalidArgumentException( "fromQueryBuilderObject missing from $model" );
-		}
-
-		return $model::fromQueryData( $row );
-	}
-
-	/**
-	 * Get results as models
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param object[] $results
-	 *
-	 * @return M[]|null
-	 */
-	protected function getAllAsModel( array $results ) {
-		/** @var Contracts\ModelCrud $model */
-		$model = $this->model;
-
-		if ( ! method_exists( $model, 'fromQueryBuilderObject' ) ) {
-			throw new InvalidArgumentException( "fromQueryBuilderObject missing from $model" );
-		}
-
-		return array_map( static function( $object ) use ( $model ) {
-			return $model::fromQueryBuilderObject( $object );
-		}, $results );
+		return array_map( [ $this->model, 'fromQueryData' ], $results );
 	}
 }
