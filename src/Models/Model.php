@@ -254,7 +254,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			return $this->cachedRelations[ $key ];
 		}
 
-		$relationship = $this->relationships[ $key ];
+		$relationship = static::$relationships[ $key ];
 
 		switch ( $relationship ) {
 			case Relationship::BELONGS_TO:
