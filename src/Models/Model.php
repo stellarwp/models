@@ -28,14 +28,14 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @var array<string,string|array>
 	 */
-	static protected $properties = [];
+	protected static $properties = [];
 
 	/**
 	 * The model relationships assigned to their relationship types.
 	 *
 	 * @var array<string,string>
 	 */
-	static protected $relationships = [];
+	protected static $relationships = [];
 
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
