@@ -7,7 +7,7 @@ use StellarWP\Models\ModelQueryBuilder;
 /**
  * @since 1.0.0
  */
-interface ModelReadOnly {
+interface ModelReadOnly extends ModelBuildsFromQueryData {
 	/**
 	 * @since 1.0.0
 	 *
@@ -23,13 +23,4 @@ interface ModelReadOnly {
 	 * @return ModelQueryBuilder
 	 */
 	public static function query();
-
-	/**
-	 * @since 1.0.0
-	 *
-	 * @param $object
-	 *
-	 * @return Model
-	 */
-	public static function fromQueryBuilderObject( $object );
 }
