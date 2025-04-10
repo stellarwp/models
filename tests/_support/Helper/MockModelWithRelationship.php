@@ -8,11 +8,11 @@ use StellarWP\Models\Model;
 use StellarWP\Models\ValueObjects\Relationship;
 
 class MockModelWithRelationship extends Model {
-	protected $properties = [
+	protected static $properties = [
 		'id' => 'int',
 	];
 
-	protected $relationships = [
+	protected static $relationships = [
 		'relatedButNotCallable'     => Relationship::HAS_ONE,
 		'relatedAndCallableHasOne'  => Relationship::HAS_ONE,
 		'relatedAndCallableHasMany' => Relationship::HAS_MANY,

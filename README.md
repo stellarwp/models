@@ -68,7 +68,7 @@ class Breakfast_Model extends Model {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
@@ -95,7 +95,7 @@ class Breakfast_Model extends Model implements Contracts\ModelReadOnly {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
@@ -136,7 +136,7 @@ class Breakfast_Model extends Model implements Contracts\ModelCrud {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
@@ -199,7 +199,7 @@ class Breakfast_Model extends Model {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
