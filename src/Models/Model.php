@@ -14,6 +14,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public const BUILD_MODE_IGNORE_EXTRA = 2;
 
 	/**
+	 * The model's properties.
+	 *
+	 * @var ModelPropertyCollection
+	 */
+	protected ModelPropertyCollection $propertyCollection;
+
+	/**
 	 * The model's attributes.
 	 *
 	 * @var array<string,mixed>
@@ -95,6 +102,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * A more robust, alternative way to define properties for the model than static::$properties.
+	 *
+	 * @return array<string,ModelPropertyDefinition|array<string,mixed>>
+	 */
+	protected static function properties(): array {
+		return [];
+	}
+
+	/**
 	 * Fills the model with an array of attributes.
 	 *
 	 * @since 1.0.0
@@ -146,6 +162,14 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		}
 
 		return $dirty;
+	}
+
+	public function getPropertyCollection(): ModelPropertyCollection {
+		if ( ! isset( $this->propertyCollection ) ) {
+			$this->propertyCollection = new ModelPropertyCollection( array_merge( static::$properties, static::properties() ) );
+		}
+
+		return $this->propertyCollection;
 	}
 
 	/**
