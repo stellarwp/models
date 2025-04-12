@@ -292,6 +292,24 @@ class TestModel extends ModelsTestCase {
 		$this->assertTrue( $model->isSet( 'lastName' ) );
 	}
 
+	public function testFromData() {
+		$model = MockModel::fromData( [
+			'id' => '1',
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [ 'billMurray@givewp.com' ],
+			'microseconds' => '1234567890',
+			'number' => '1234567890',
+		] );
+
+		$this->assertEquals( 1, $model->id );
+		$this->assertEquals( 'Bill', $model->firstName );
+		$this->assertEquals( 'Murray', $model->lastName );
+		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
+		$this->assertEquals( 1234567890, $model->microseconds );
+		$this->assertEquals( 1234567890, $model->number );
+	}
+
 	/**
 	 * @since 1.0.0
 	 *
