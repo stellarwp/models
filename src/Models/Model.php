@@ -398,7 +398,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
 	 * @return static
 	 */
-	public static function fromData($data, $mode = self::BUILD_MODE_IGNORE_EXTRA): static {
+	public static function fromData($data, $mode = self::BUILD_MODE_IGNORE_EXTRA) {
 		if ( ! is_object( $data ) && ! is_array( $data ) ) {
 			Config::throwInvalidArgumentException( 'Query data must be an object or array' );
 		}
