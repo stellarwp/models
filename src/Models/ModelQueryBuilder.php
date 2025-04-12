@@ -7,7 +7,7 @@ use StellarWP\DB\DB;
 use StellarWP\DB\QueryBuilder\QueryBuilder;
 use StellarWP\DB\QueryBuilder\Clauses\RawSQL;
 use StellarWP\Models\Contracts\Model;
-use StellarWP\Models\Contracts\ModelBuildsFromQueryData;
+use StellarWP\Models\Contracts\ModelBuildsFromData;
 /**
  * @since 1.2.2  improve model generic
  * @since 1.0.0
@@ -26,8 +26,8 @@ class ModelQueryBuilder extends QueryBuilder {
 	 * @param class-string<M> $modelClass
 	 */
 	public function __construct( string $modelClass ) {
-		if ( ! is_subclass_of( $modelClass, ModelBuildsFromQueryData::class ) ) {
-			throw new InvalidArgumentException( "$modelClass must implement " . ModelBuildsFromQueryData::class );
+		if ( ! is_subclass_of( $modelClass, ModelBuildsFromData::class ) ) {
+			throw new InvalidArgumentException( "$modelClass must implement " . ModelBuildsFromData::class );
 		}
 
 		$this->model = $modelClass;
