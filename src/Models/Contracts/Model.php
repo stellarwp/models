@@ -4,7 +4,7 @@ namespace StellarWP\Models\Contracts;
 
 use RuntimeException;
 
-interface Model extends ModelBuildsFromQueryData {
+interface Model extends ModelBuildsFromData {
 	/**
 	 * Constructor.
 	 *

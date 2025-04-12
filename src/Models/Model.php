@@ -394,23 +394,23 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
 	 * @return static
 	 */
-	public static function fromQueryData($queryData, $mode = self::BUILD_MODE_IGNORE_EXTRA): static {
-		if ( ! is_object( $queryData ) && ! is_array( $queryData ) ) {
+	public static function fromData($data, $mode = self::BUILD_MODE_IGNORE_EXTRA): static {
+		if ( ! is_object( $data ) && ! is_array( $data ) ) {
 			Config::throwInvalidArgumentException( 'Query data must be an object or array' );
 		}
 
-		$queryData = (array) $queryData;
+		$data = (array) $data;
 
 		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
 		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
-			$extraKeys = array_diff_key( (array) $queryData, static::$properties );
+			$extraKeys = array_diff_key( (array) $data, static::$properties );
 			if ( ! empty( $extraKeys ) ) {
 				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
 			}
 		}
 
 		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
-			$missingKeys = array_diff_key( static::$properties, (array) $queryData );
+			$missingKeys = array_diff_key( static::$properties, (array) $data );
 			if ( ! empty( $missingKeys ) ) {
 				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
 			}
@@ -419,12 +419,12 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$instance = new static();
 
 		foreach (static::$properties as $key => $type) {
-			if ( ! array_key_exists( $key, $queryData ) ) {
+			if ( ! array_key_exists( $key, $data ) ) {
 				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
 			}
 
 			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
-			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $queryData[$key], $key));
+			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $data[$key], $key));
 		}
 
 		return $instance;

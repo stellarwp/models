@@ -7,13 +7,13 @@ use StellarWP\Models\ModelQueryBuilder;
 /**
  * @since 2.0.0
  */
-interface ModelBuildsFromQueryData {
+interface ModelBuildsFromData {
 	/**
 	 * @since 2.0.0
 	 *
-	 * @param array|object $queryData
+	 * @param array|object $data
 	 *
 	 * @return Model
 	 */
-	public static function fromQueryData( $queryData );
+	public static function fromData( $data );
 }
