@@ -74,6 +74,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return mixed
 	 */
 	protected static function castValueForProperty( string $type, $value, string $property ) {
+		if ( static::isPropertyTypeValid( $property, $value ) || $value === null ) {
+			return $value;
+		}
+
 		switch ( $type ) {
 			case 'int':
 				return (int) $value;
