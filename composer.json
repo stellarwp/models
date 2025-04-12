@@ -14,7 +14,7 @@
   "config": {
     "preferred-install": "dist",
     "platform": {
-      "php": "7.0"
+      "php": "7.4"
     },
     "allow-plugins": {
       "kylekatarnls/update-helper": true
