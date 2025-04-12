@@ -275,10 +275,8 @@ class TestModel extends ModelsTestCase {
 
 	/**
 	 * @since 1.0.0
-	 *
-	 * @return void
 	 */
-	public function testIsSet() {
+	public function testIsSet(): void {
 		$model = new MockModel();
 
 		// This has a default so we should see as set.
@@ -292,7 +290,10 @@ class TestModel extends ModelsTestCase {
 		$this->assertTrue( $model->isSet( 'lastName' ) );
 	}
 
-	public function testFromData() {
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldCreateInstanceWithCorrectTypes(): void {
 		$model = MockModel::fromData( [
 			'id' => '1',
 			'firstName' => 'Bill',
@@ -308,6 +309,17 @@ class TestModel extends ModelsTestCase {
 		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
 		$this->assertEquals( 1234567890, $model->microseconds );
 		$this->assertEquals( 1234567890, $model->number );
+	}
+
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
+		$this->expectException( Config::getInvalidArgumentException() );
+
+		MockModel::fromData( [
+			'date' => '123',
+		] );
 	}
 
 	/**
