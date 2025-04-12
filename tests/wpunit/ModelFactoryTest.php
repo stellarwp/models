@@ -143,10 +143,12 @@ class ModelFactoryTest extends ModelsTestCase
 		};
 
 		$nestedFactory = new class(MockModel::class) extends ModelFactory {
+			private $counter = 0;
+
 			public function definition(): array {
-				static $counter = 1;
+				$this->counter++;
 				return [
-					'id' => $counter++,
+					'id' => $this->counter,
 				];
 			}
 		};
