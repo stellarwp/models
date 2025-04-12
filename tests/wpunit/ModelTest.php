@@ -301,7 +301,7 @@ class TestModel extends ModelsTestCase {
 			'emails' => [ 'billMurray@givewp.com' ],
 			'microseconds' => '1234567890',
 			'number' => '1234567890',
-		] );
+		], MockModel::BUILD_MODE_IGNORE_EXTRA );
 
 		$this->assertEquals( 1, $model->id );
 		$this->assertEquals( 'Bill', $model->firstName );
