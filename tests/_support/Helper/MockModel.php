@@ -11,7 +11,7 @@ class MockModel extends Model {
 		'lastName'     => 'string',
 		'emails'       => [ 'array', [] ],
 		'microseconds' => 'float',
-		'number'       => 'int',
+		'int'       => 'int',
 		'date'         => \DateTime::class,
 	];
 }
