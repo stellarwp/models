@@ -74,6 +74,10 @@ class ModelProperty {
 		return $this->isDirty;
 	}
 
+	public function isSet(): bool {
+		return isset( $this->value );
+	}
+
 	/**
 	 * Checks whether a given value is valid for the property.
 	 */
@@ -106,12 +110,36 @@ class ModelProperty {
 		}
 	}
 
-	public function reset(): void {
-		$this->value = $this->originalValue;
+	/**
+	 * Reset the property to its original value and clear the dirty flag. If the property does not have an
+	 * original value, it will be unset.
+	 */
+	public function restoreToOriginal(): void {
+		if ( isset( $this->originalValue ) ) {
+			$this->value = $this->originalValue;
+		} else {
+			unset( $this->value );
+		}
+
 		$this->isDirty = false;
 	}
 
-	public function value( $value ) {
+	/**
+	 * Resets the original value with the current value and clears the dirty flag.
+	 */
+	public function resetValue(): void {
+		$this->originalValue = $this->value;
+		$this->isDirty = false;
+	}
+
+	/**
+	 * Sets the value of the property.
+	 *
+	 * @param mixed $value The value to set.
+	 *
+	 * @return $this
+	 */
+	public function setValue( $value ) {
 		$this->value = $value;
 		$this->isDirty = false;
 
