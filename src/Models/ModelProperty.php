@@ -156,7 +156,7 @@ class ModelProperty {
 		}
 
 		$this->value = $value;
-		$this->isDirty = false;
+		$this->isDirty = $value !== $this->originalValue;
 
 		return $this;
 	}

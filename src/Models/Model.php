@@ -49,7 +49,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	public function __construct( array $attributes = [] ) {
-		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( self::getPropertyDefinitions(), $attributes );
+		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( static::getPropertyDefinitions(), $attributes );
 	}
 
 	/**
@@ -158,7 +158,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return mixed
 	 */
 	public function getAttribute( string $key, $default = null ) {
-		return $this->propertyCollection->has( $key ) ? $this->propertyCollection->get( $key )->getValue() : $default;
+		$property = $this->propertyCollection->getOrFail( $key );
+
+		return $property->isSet() ? $property->getValue() : $default;
 	}
 
 	/**
@@ -190,9 +192,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	public static function getPropertyDefinitions(): array {
-		static $definitions = null;
+		static $definition = null;
 
-		if ( $definitions === null ) {
+		if ( $definition === null ) {
 			$definitions = array_merge( static::$properties, static::properties() );
 
 			foreach ( $definitions as $key => $definition ) {
@@ -206,9 +208,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 				$definitions[ $key ] = $definition->lock();
 			}
+
+			$definition = $definitions;
 		}
 
-		return $definitions;
+		return $definition;
 	}
 
 	/**
@@ -233,7 +237,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return boolean
 	 */
 	public function isSet( string $key ): bool {
-		return $this->propertyCollection->has( $key );
+		return $this->propertyCollection->isSet( $key );
 	}
 
 	/**
@@ -507,7 +511,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	public function __isset( string $key ) {
-		return $this->propertyCollection->has( $key );
+		return $this->propertyCollection->isSet( $key );
 	}
 
 	/**

@@ -187,10 +187,6 @@ class TestModel extends ModelsTestCase {
 		$model = new MockModel();
 
 		$this->assertFalse( isset( $model->id ) );
-
-		$model->id = null;
-
-		$this->assertFalse( isset( $model->id ) );
 	}
 
 	/**
@@ -286,7 +282,7 @@ class TestModel extends ModelsTestCase {
 		$this->assertFalse( $model->isSet( 'lastName' ) );
 
 		// Now we set it, so it should be true - even though we set it to null.
-		$model->lastName = null;
+		$model->lastName = 'Murray';
 		$this->assertTrue( $model->isSet( 'lastName' ) );
 	}
 

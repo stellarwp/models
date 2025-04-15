@@ -207,6 +207,15 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	}
 
 	/**
+	 * Check if the property is set.
+	 *
+	 * @since 2.0.0
+	 */
+	public function isSet( string $key ): bool {
+		return $this->getOrFail( $key )->isSet();
+	}
+
+	/**
 	 * Map the properties. This does not use array_map because we want to preserve the keys.
 	 *
 	 * @since 2.0.0
@@ -236,6 +245,15 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 */
 	public function revertChangedProperties(): void {
 		$this->tap( fn( ModelProperty $property ) => $property->isDirty() ? $property->revertChanges() : null );
+	}
+
+	/**
+	 * Revert the changes to the property so the original value matches the current value.
+	 *
+	 * @since 2.0.0
+	 */
+	public function revertProperty( string $key ): void {
+		$this->getOrFail( $key )->revertChanges();
 	}
 
 	/**
