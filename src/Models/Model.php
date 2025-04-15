@@ -104,11 +104,22 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Revert the changes to a specific property.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key Property name.
+	 */
+	public function revertChange( string $key ): void {
+		$this->propertyCollection->getOrFail( $key )->revertChanges();
+	}
+
+	/**
 	 * Discard the changes to the properties.
 	 *
 	 * @since 2.0.0
 	 */
-	public function discardChanges(): void {
+	public function revertChanges(): void {
 		$this->propertyCollection->revertChangedProperties();
 	}
 
