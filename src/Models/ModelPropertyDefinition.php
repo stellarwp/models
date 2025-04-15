@@ -121,6 +121,9 @@ class ModelPropertyDefinition {
 			throw new \InvalidArgumentException( 'Invalid shorthand property definition' );
 		}
 
+		// Nullable for backwards compatibility
+		$property->nullable();
+
 		return $property;
 	}
 
