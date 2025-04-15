@@ -90,7 +90,7 @@ class ModelProperty {
 	 * @since 2.0.0
 	 */
 	public function getValue() {
-		return $this->value;
+		return $this->value ?? null;
 	}
 
 	/**
@@ -167,7 +167,12 @@ class ModelProperty {
 	 * @since 2.0.0
 	 */
 	public function unset(): void {
-		unset( $this->value );
+		// Only attempt to unset if the property is already set
+		if (isset($this->value)) {
+			unset( $this->value );
+		}
+
+		// If the orginal value had a value we have now deviated
 		$this->isDirty = isset( $this->originalValue );
 	}
 }

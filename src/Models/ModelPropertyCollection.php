@@ -25,10 +25,6 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @param array<string,ModelProperty> $properties
 	 */
 	public function __construct( array $properties = [] ) {
-		if ( empty( $properties ) ) {
-			throw new \InvalidArgumentException( 'Properties must be an array of ModelProperty instances.' );
-		}
-
 		foreach ( $properties as $key => $property ) {
 			if ( ! is_string( $key ) ) {
 				throw new \InvalidArgumentException( 'Property key must be a string.' );
@@ -204,6 +200,15 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 */
 	public function isDirty(): bool {
 		return $this->getDirtyProperties()->count() > 0;
+	}
+
+	/**
+	 * Check if the collection is empty (has no properties).
+	 *
+	 * @since 2.0.0
+	 */
+	public function isEmpty(): bool {
+		return empty( $this->properties );
 	}
 
 	/**
