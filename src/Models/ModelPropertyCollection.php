@@ -134,7 +134,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @since 2.0.0
 	 */
 	public function getDirtyValues(): array {
-		return $this->getDirtyProperties()->reduce( fn( ModelProperty $property ) => $property->getValue() );
+		return $this->getDirtyProperties()->map( fn( ModelProperty $property ) => $property->getValue() );
 	}
 
 	/**
@@ -158,7 +158,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @return array<string,mixed>
 	 */
 	public function getOriginalValues(): array {
-		return $this->reduce( fn( ModelProperty $property ) => $property->getOriginalValue() );
+		return $this->map( fn( ModelProperty $property ) => $property->getOriginalValue() );
 	}
 
 	/**
@@ -185,7 +185,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @since 2.0.0
 	 */
 	public function getValues(): array {
-		return $this->reduce( fn( ModelProperty $property ) => $property->getValue() );
+		return $this->map( fn( ModelProperty $property ) => $property->getValue() );
 	}
 
 	/**
@@ -207,17 +207,26 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	}
 
 	/**
-	 * Reduce the properties.
+	 * Map the properties. This does not use array_map because we want to preserve the keys.
 	 *
 	 * @since 2.0.0
 	 * @return array<string,mixed>
 	 */
-	public function reduce( callable $callback ) {
-		return array_reduce( $this->properties, static function( $carry, ModelProperty $property ) use ( $callback ) {
+	public function map( callable $callback ) {
+		return $this->reduce( static function( $carry, ModelProperty $property ) use ( $callback ) {
 			$carry[ $property->getKey() ] = $callback( $property );
 
 			return $carry;
 		}, [] );
+	}
+
+	/**
+	 * Reduce the properties.
+	 *
+	 * @since 2.0.0
+	 */
+	public function reduce( callable $callback, $initial = null ) {
+		return array_reduce( $this->properties, $callback, $initial );
 	}
 
 	/**
