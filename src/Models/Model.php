@@ -527,4 +527,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public function __set( string $key, $value ) {
 		$this->setAttribute( $key, $value );
 	}
+
+	/**
+	 * Unset a property.
+	 *
+	 * @since 2.0.0
+	 */
+	public function __unset( string $key ) {
+		$this->propertyCollection->unsetProperty( $key );
+	}
 }

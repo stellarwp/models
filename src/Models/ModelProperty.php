@@ -160,4 +160,14 @@ class ModelProperty {
 
 		return $this;
 	}
+
+	/**
+	 * Unsets the value of the property.
+	 *
+	 * @since 2.0.0
+	 */
+	public function unset(): void {
+		unset( $this->value );
+		$this->isDirty = isset( $this->originalValue );
+	}
 }

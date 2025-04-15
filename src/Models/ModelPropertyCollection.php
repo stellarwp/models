@@ -278,4 +278,13 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 
 		return $this;
 	}
+
+	/**
+	 * Unset a property.
+	 *
+	 * @since 2.0.0
+	 */
+	public function unsetProperty( $key ): void {
+		$this->getOrFail( $key )->unset();
+	}
 }
