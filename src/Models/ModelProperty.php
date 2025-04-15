@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace StellarWP\Models;
 
+use InvalidArgumentException;
+
 class ModelProperty {
+	private const NO_INITIAL_VALUE = '__NO_STELLARWP_MODELS_INITIAL_VALUE__';
+
 	/**
 	 * The property definition.
 	 */
@@ -30,22 +34,33 @@ class ModelProperty {
 	 */
 	private $value;
 
-	public function __construct( string $key, ModelPropertyDefinition $definition ) {
+	/**
+	 * @since 2.0.0
+	 *
+	 * @param mixed $initialValue The optional, initial value of the property, which takes precedence over the definition's default value.
+	 */
+	public function __construct( string $key, ModelPropertyDefinition $definition, $initialValue = self::NO_INITIAL_VALUE ) {
 		$this->key = $key;
 		$this->definition = $definition->lock();
 
-		if ( $this->definition->hasDefault() ) {
-			if ( ! $this->isValidValue( $this->definition->getDefault() ) ) {
+		if ( $initialValue === self::NO_INITIAL_VALUE && $this->definition->hasDefault() ) {
+			$initialValue = $this->definition->getDefault();
+		}
+
+		if ( $initialValue !== self::NO_INITIAL_VALUE ) {
+			if ( ! $this->definition->isValidValue( $initialValue ) ) {
 				throw new \InvalidArgumentException( 'Default value is not valid for the property.' );
 			}
 
-			$this->value = $this->definition->getDefault();
+			$this->value = $initialValue;
 			$this->originalValue = $this->value;
 		}
 	}
 
 	/**
 	 * Get the definition of the property.
+	 *
+	 * @since 2.0.0
 	 */
 	public function getDefinition(): ModelPropertyDefinition {
 		return $this->definition;
@@ -53,68 +68,64 @@ class ModelProperty {
 
 	/**
 	 * Get the key of the property.
+	 *
+	 * @since 2.0.0
 	 */
 	public function getKey(): string {
 		return $this->key;
 	}
 
+	/**
+	 * Get the original value of the property.
+	 *
+	 * @since 2.0.0
+	 */
 	public function getOriginalValue() {
 		return $this->originalValue;
 	}
 
+	/**
+	 * Get the value of the property.
+	 *
+	 * @since 2.0.0
+	 */
 	public function getValue() {
 		return $this->value;
 	}
 
+	/**
+	 * Returns whether the property has not changed.
+	 *
+	 * @since 2.0.0
+	 */
 	public function isClean(): bool {
 		return !$this->isDirty;
 	}
 
+	/**
+	 * Returns whether the property has changed.
+	 *
+	 * @since 2.0.0
+	 */
 	public function isDirty(): bool {
 		return $this->isDirty;
 	}
 
+	/**
+	 * Returns whether the property value has been set.
+	 *
+	 * @since 2.0.0
+	 */
 	public function isSet(): bool {
 		return isset( $this->value );
 	}
 
 	/**
-	 * Checks whether a given value is valid for the property.
+	 * Reverts the changes to the property — restoring the original value and clearing the dirty flag.
+	 *
+	 * @since 2.0.0
 	 */
-	public function isValidValue( $value ): bool {
-		$valueType = gettype( $value );
-
-		switch ( $valueType ) {
-			case 'NULL':
-				return $this->definition->isNullable();
-			case 'integer':
-				return $this->definition->supportsType( 'int' );
-			case 'string':
-				return $this->definition->supportsType( 'string' );
-			case 'boolean':
-				return $this->definition->supportsType( 'bool' );
-			case 'array':
-				return $this->definition->supportsType( 'array' );
-			case 'double':
-				return $this->definition->supportsType( 'float' );
-			case 'object':
-				if ( $this->definition->supportsType( 'object' ) ) {
-					return true;
-				} else {
-					$class = get_class( $value );
-					return $this->definition->supportsType( $class );
-				}
-
-			default:
-				return false;
-		}
-	}
-
-	/**
-	 * Reset the property to its original value and clear the dirty flag. If the property does not have an
-	 * original value, it will be unset.
-	 */
-	public function restoreToOriginal(): void {
+	public function revertChanges(): void {
 		if ( isset( $this->originalValue ) ) {
 			$this->value = $this->originalValue;
 		} else {
@@ -125,9 +136,11 @@ class ModelProperty {
 	}
 
 	/**
-	 * Resets the original value with the current value and clears the dirty flag.
+	 * Commits the changes to the property — syncing the original value with the current and resetting the dirty flag.
+	 *
+	 * @since 2.0.0
 	 */
-	public function resetValue(): void {
+	public function commitChanges(): void {
 		$this->originalValue = $this->value;
 		$this->isDirty = false;
 	}
@@ -135,11 +148,13 @@ class ModelProperty {
 	/**
 	 * Sets the value of the property.
 	 *
-	 * @param mixed $value The value to set.
-	 *
-	 * @return $this
+	 * @since 2.0.0
 	 */
-	public function setValue( $value ) {
+	public function setValue( $value ): self {
+		if ( ! $this->definition->isValidValue( $value ) ) {
+			throw new \InvalidArgumentException( 'Value is not valid for the property.' );
+		}
+
 		$this->value = $value;
 		$this->isDirty = false;
 

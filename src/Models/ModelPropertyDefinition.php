@@ -10,7 +10,7 @@ class ModelPropertyDefinition {
 	/**
 	 * The default value of the property.
 	 *
-	 * @var mixed
+	 * @var mixed|Closure
 	 */
 	private $default;
 
@@ -51,7 +51,7 @@ class ModelPropertyDefinition {
 	/**
 	 * Set the default value of the property.
 	 *
-	 * @param mixed $default The default value of the property.
+	 * @param mixed|Closure $default The default value of the property.
 	 */
 	public function default( $default ): self {
 		$this->checkLock();
@@ -130,6 +130,12 @@ class ModelPropertyDefinition {
 	 * @return mixed
 	 */
 	public function getDefault() {
+		if ( $this->default instanceof Closure ) {
+			$default = $this->default;
+
+			return $default();
+		}
+
 		return $this->default;
 	}
 
@@ -177,6 +183,37 @@ class ModelPropertyDefinition {
 	 */
 	public function isRequiredOnSave(): bool {
 		return $this->requiredOnSave;
+	}
+
+	/**
+	 * Whether the property is valid for the given value.
+	 */
+	public function isValidValue( $value ): bool {
+		$valueType = gettype( $value );
+
+		switch ( $valueType ) {
+			case 'NULL':
+				return $this->nullable;
+			case 'integer':
+				return $this->supportsType( 'int' );
+			case 'string':
+				return $this->supportsType( 'string' );
+			case 'boolean':
+				return $this->supportsType( 'bool' );
+			case 'array':
+				return $this->supportsType( 'array' );
+			case 'double':
+				return $this->supportsType( 'float' );
+			case 'object':
+				if ( $this->supportsType( 'object' ) ) {
+					return true;
+				} else {
+					$class = get_class( $value );
+					return $this->supportsType( $class );
+				}
+			default:
+				return false;
+		}
 	}
 
 	/**
