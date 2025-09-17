@@ -1,16 +1,47 @@
 <?php
+/**
+ * The model.
+ *
+ * @since 1.0.0
+ *
+ * @package StellarWP\Models;
+ */
 
 namespace StellarWP\Models;
 
 use JsonSerializable;
-use RuntimeException;
 use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
+use InvalidArgumentException;
 
+/**
+ * The model.
+ *
+ * @since 1.0.0
+ *
+ * @package StellarWP\Models;
+ */
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
+	/**
+	 * The build mode for the model.
+	 *
+	 * @var int
+	 */
 	public const BUILD_MODE_STRICT = 0;
+
+	/**
+	 * The build mode for the model.
+	 *
+	 * @var int
+	 */
 	public const BUILD_MODE_IGNORE_MISSING = 1;
+
+	/**
+	 * The build mode for the model.
+	 *
+	 * @var int
+	 */
 	public const BUILD_MODE_IGNORE_EXTRA = 2;
 
 	/**
@@ -25,21 +56,21 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @var array<string,string|array>
 	 */
-	protected static $properties = [];
+	protected static array $properties = [];
 
 	/**
 	 * The model relationships assigned to their relationship types.
 	 *
 	 * @var array<string,string>
 	 */
-	protected static $relationships = [];
+	protected static array $relationships = [];
 
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
 	 *
 	 * @var Model[]
 	 */
-	private $cachedRelations = [];
+	private array $cachedRelations = [];
 
 	/**
 	 * Constructor.
@@ -63,6 +94,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param string $property The property being casted.
 	 *
 	 * @return mixed
+	 *
+	 * @throws InvalidArgumentException If the value is not valid for the property.
 	 */
 	protected static function castValueForProperty( ModelPropertyDefinition $definition, $value, string $property ) {
 		if ( $definition->isValidValue( $value ) || $value === null ) {
@@ -75,7 +108,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$type = $definition->getType();
 		if ( count( $type ) !== 1 ) {
-			throw new \InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
+			throw new InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
 		}
 
 		switch ( $type[0] ) {
@@ -169,6 +202,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 1.0.0
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException If the property does not exist.
 	 */
 	public function getDirty() : array {
 		return $this->propertyCollection->getDirtyValues();
@@ -178,7 +213,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$definitions = static::getPropertyDefinitions();
 
 		if ( ! isset( $definitions[ $key ] ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $definitions[ $key ];
@@ -190,6 +225,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 2.0.0
 	 *
 	 * @return array<string,ModelPropertyDefinition>
+	 *
+	 * @throws InvalidArgumentException If the property key is not a string.
 	 */
 	public static function getPropertyDefinitions(): array {
 		static $definition = null;
@@ -199,7 +236,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 			foreach ( $definitions as $key => $definition ) {
 				if ( ! is_string( $key ) ) {
-					throw new \InvalidArgumentException( 'Property key must be a string.' );
+					throw new InvalidArgumentException( 'Property key must be a string.' );
 				}
 
 				if ( ! $definition instanceof ModelPropertyDefinition ) {
@@ -224,7 +261,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return mixed|array
 	 */
-	public function getOriginal( string $key = null ) {
+	public function getOriginal( ?string $key = null ) {
 		return $key ? $this->propertyCollection->getOrFail( $key )->getOriginalValue() : $this->propertyCollection->getOriginalValues();
 	}
 
@@ -368,7 +405,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 */
 	#[\ReturnTypeWillChange]
 	public function jsonSerialize() {
-		return get_object_vars( $this );
+		return $this->toArray();
 	}
 
 	/**

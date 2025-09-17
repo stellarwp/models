@@ -99,7 +99,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool;
+	public function isClean( ?string $attribute = null ) : bool;
 
 	/**
 	 * Determines if a given attribute is dirty.
@@ -110,7 +110,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool;
+	public function isDirty( ?string $attribute = null ) : bool;
 
 	/**
 	 * Validates an attribute to a PHP type.

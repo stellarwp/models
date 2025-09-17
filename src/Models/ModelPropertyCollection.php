@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace StellarWP\Models;
 
+use Countable;
+use IteratorAggregate;
+use InvalidArgumentException;
+use ArrayIterator;
+use Traversable;
+
 /**
  * A collection of properties for a model.
  *
  * Some philosophical notes:
  * 		* The collection is immutable. Once created, the collection cannot be changed.
  */
-class ModelPropertyCollection implements \Countable, \IteratorAggregate {
+class ModelPropertyCollection implements Countable, IteratorAggregate {
 	/**
 	 * The properties.
 	 *
@@ -23,15 +29,18 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 *
 	 * @since 2.0.0
 	 * @param array<string,ModelProperty> $properties
+	 *
+	 * @throws InvalidArgumentException If the property key is not a string.
+	 * @throws InvalidArgumentException If the property is not an instance of ModelProperty.
 	 */
 	public function __construct( array $properties = [] ) {
 		foreach ( $properties as $key => $property ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $property instanceof ModelProperty ) {
-				throw new \InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
+				throw new InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
 			}
 
 			$this->properties[$key] = $property;
@@ -53,7 +62,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @since 2.0.0
 	 */
 	public function count(): int {
-		return count($this->properties);
+		return count( $this->properties );
 	}
 
 	/**
@@ -74,17 +83,20 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 *
 	 * @param array<string,ModelPropertyDefinition> $propertyDefinitions
 	 * @return ModelPropertyCollection
+	 *
+	 * @throws InvalidArgumentException If the property key is not a string.
+	 * @throws InvalidArgumentException If the property definition is not an instance of ModelPropertyDefinition.
 	 */
 	public static function fromPropertyDefinitions( array $propertyDefinitions, array $initialValues = [] ): ModelPropertyCollection {
 		$properties = [];
 
 		foreach ( $propertyDefinitions as $key => $definition ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $definition instanceof ModelPropertyDefinition ) {
-				throw new \InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
+				throw new InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
 			}
 
 			if ( isset( $initialValues[$key] ) ) {
@@ -102,8 +114,8 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 *
 	 * @since 2.0.0
 	 */
-	public function getIterator(): \Traversable {
-		return new \ArrayIterator($this->properties);
+	public function getIterator(): Traversable {
+		return new ArrayIterator($this->properties);
 	}
 
 	/**
@@ -137,10 +149,12 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Get a property by key. If the property does not exist, throw an exception.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @throws InvalidArgumentException If the property does not exist.
 	 */
 	public function getOrFail( string $key ): ModelProperty {
 		if ( ! $this->has( $key ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $this->properties[$key];
@@ -265,17 +279,24 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Set the values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @throws InvalidArgumentException If the property does not exist.
 	 */
 	public function setValues( array $values ) {
 		foreach ( $values as $key => $value ) {
 			if ( ! $this->has( $key ) ) {
-				throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+				throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 			}
 
 			$this->properties[$key]->setValue( $value );
 		}
 	}
 
+	/**
+	 * Tap the properties.
+	 *
+	 * @since 2.0.0
+	 */
 	public function tap( callable $callback ): self {
 		foreach ( $this->properties as $property ) {
 			$callback( $property );

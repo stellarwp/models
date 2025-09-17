@@ -263,7 +263,7 @@ class ModelPropertyDefinition {
 	 * Whether the property supports the given type.
 	 */
 	public function supportsType( string $type ): bool {
-		return in_array( $type, $this->type );
+		return in_array( $type, $this->type, true );
 	}
 
 	/**
