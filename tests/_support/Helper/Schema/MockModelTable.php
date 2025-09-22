@@ -29,7 +29,7 @@ class MockModelTable extends Table {
 		$columns[] = ( new String_Column( 'firstName' ) )->set_default( 'Michael' );
 		$columns[] = ( new String_Column( 'lastName' ) );
 		$columns[] = ( new Text_Column( 'emails' ) )->set_php_type( Text_Column::PHP_TYPE_JSON );
-		$columns[] = ( new Float_Column( 'microseconds' ) );
+		$columns[] = ( new Float_Column( 'microseconds' ) )->set_length( 15 )->set_precision( 4 );
 		$columns[] = ( new Integer_Column( 'int' ) );
 		$columns[] = ( new DateTime_Column( 'date' ) );
 

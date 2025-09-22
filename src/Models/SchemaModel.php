@@ -47,6 +47,8 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			throw new InvalidArgumentException( 'Schema models do not accept property definitions. Define a schema interface to link with instead.' );
 		}
 
+		unset( static::$cached_definitions[ static::class ] );
+
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( $this->getPropertyDefinitionsFromSchema(), $attributes );
 	}
 
@@ -96,7 +98,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 		$property      = str_replace( [ 'get_', 'set_' ], '', $name );
 		$relationships = $this->getRelationships();
 
-		if ( $this->hasProperty( $property ) && ! isset( $relationships[ $property ] ) ) {
+		if ( ! $this->hasProperty( $property ) && ! isset( $relationships[ $property ] ) ) {
 			throw new BadMethodCallException( "`{$property}` is not a property or a relationship on the model." );
 		}
 
@@ -225,8 +227,23 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 		$property_definitions = [];
 
 		foreach ( $table_schema->get_columns() as $column ) {
-			$property_definitions[ $column->get_name() ] = ( new ModelPropertyDefinition() )->type( $column->get_type() )->nullable( $column->get_nullable() )->default( $column->get_default() );
+			$definition = ( new ModelPropertyDefinition() )->type( $column->get_php_type() );
+			if ( $column->get_nullable() ) {
+				$definition->nullable();
+			}
+
+			if ( $column->get_default() ) {
+				$definition->default( $column->get_default() );
+			}
+
+			if ( is_callable( [ $this->getTableInterface(), 'cast_value_based_on_type' ] ) ) {
+				$definition->castWith( fn( $value ) => $this->getTableInterface()::cast_value_based_on_type( $column->get_php_type(), $value ) );
+			}
+
+			$property_definitions[ $column->get_name() ] = $definition;
 		}
+
+		static::$properties = $property_definitions;
 
 		return $property_definitions;
 	}
@@ -448,5 +465,57 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			'this'  => $this_entity_column,
 			'other' => $other_entity_column,
 		];
+	}
+
+	/**
+	 * Constructs a model instance from database query data.
+	 *
+	 * @param object|array $queryData
+	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
+	 * @return static
+	 */
+	public static function fromData($data, $mode = self::BUILD_MODE_IGNORE_EXTRA) {
+		if ( ! is_object( $data ) && ! is_array( $data ) ) {
+			Config::throwInvalidArgumentException( 'Query data must be an object or array' );
+		}
+
+		$data = (array) $data;
+
+		$model = new static();
+
+		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
+			$extraKeys = array_diff_key( (array) $data, static::$properties );
+			if ( ! empty( $extraKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
+			}
+		}
+
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
+			$missingKeys = array_diff_key( static::$properties, (array) $data );
+			if ( ! empty( $missingKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
+			}
+		}
+
+		foreach (static::propertyKeys() as $key) {
+			$property_definition = static::getPropertyDefinition( $key );
+			if ( $key !== $model->getPrimaryColumn() && ! array_key_exists( $key, $data ) && ! $property_definition->hasDefault() ) {
+				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
+			}
+
+			if ( ! isset( $data[ $key ] ) ) {
+				continue;
+			}
+
+			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
+			$model->setAttribute( $key, static::castValueForProperty( static::getPropertyDefinition( $key ), $data[ $key ], $key ) );
+		}
+
+		if ( $model->getPrimaryValue() ) {
+			$model->commitChanges();
+		}
+
+		return $model;
 	}
 }

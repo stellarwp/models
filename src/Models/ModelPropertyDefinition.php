@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StellarWP\Models;
 
 use Closure;
+use DateTimeInterface;
 
 class ModelPropertyDefinition {
 	/**
@@ -74,8 +75,6 @@ class ModelPropertyDefinition {
 	 * @param mixed $value The value to cast.
 	 */
 	public function cast( $value ) {
-		$this->checkLock();
-
 		if ( ! $this->canCast() ) {
 			throw new \RuntimeException( 'No cast method set' );
 		}
@@ -204,7 +203,7 @@ class ModelPropertyDefinition {
 			case 'boolean':
 				return $this->supportsType( 'bool' );
 			case 'array':
-				return $this->supportsType( 'array' );
+				return $this->supportsType( 'array' ) || $this->supportsType( 'json' );
 			case 'double':
 				return $this->supportsType( 'float' );
 			case 'object':
@@ -212,7 +211,7 @@ class ModelPropertyDefinition {
 					return true;
 				} else {
 					$class = get_class( $value );
-					return $this->supportsType( $class );
+					return $this->supportsType( $class ) || is_a( $class, DateTimeInterface::class, true );
 				}
 			default:
 				return false;

@@ -59,6 +59,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	protected static array $properties = [];
 
 	/**
+	 * The cached property definitions.
+	 *
+	 * @var array<string,array<string,ModelPropertyDefinition>>
+	 */
+	protected static array $cached_definitions = [];
+
+	/**
 	 * The model relationships assigned to their relationship types.
 	 *
 	 * @var array<string,string>
@@ -229,27 +236,27 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @throws InvalidArgumentException If the property key is not a string.
 	 */
 	public static function getPropertyDefinitions(): array {
-		static $definition = null;
-
-		if ( $definition === null ) {
-			$definitions = array_merge( static::$properties, static::properties() );
-
-			foreach ( $definitions as $key => $definition ) {
-				if ( ! is_string( $key ) ) {
-					throw new InvalidArgumentException( 'Property key must be a string.' );
-				}
-
-				if ( ! $definition instanceof ModelPropertyDefinition ) {
-					$definition = ModelPropertyDefinition::fromShorthand( $definition );
-				}
-
-				$definitions[ $key ] = $definition->lock();
-			}
-
-			$definition = $definitions;
+		if ( isset( static::$cached_definitions[ static::class ] ) ) {
+			return static::$cached_definitions[ static::class ];
 		}
 
-		return $definition;
+		$definitions = array_merge( static::$properties, static::properties() );
+
+		foreach ( $definitions as $key => $definition ) {
+			if ( ! is_string( $key ) ) {
+				throw new InvalidArgumentException( 'Property key must be a string.' );
+			}
+
+			if ( ! $definition instanceof ModelPropertyDefinition ) {
+				$definition = ModelPropertyDefinition::fromShorthand( $definition );
+			}
+
+			$definitions[ $key ] = $definition->lock();
+		}
+
+		static::$cached_definitions[ static::class ] = $definitions;
+
+		return $definitions;
 	}
 
 	/**

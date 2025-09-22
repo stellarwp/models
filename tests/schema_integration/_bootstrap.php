@@ -5,7 +5,6 @@ use StellarWP\Schema\Register;
 use StellarWP\Models\Tests\Schema\MockModelTable;
 use StellarWP\Models\Tests\Schema\Container;
 use StellarWP\DB\DB;
-use lucatume\DI52\Container as DI52_Container;
 
 Schema_Config::set_db( DB::class );
 Schema_Config::set_container( tests_models_get_container() );

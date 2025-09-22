@@ -3652,12 +3652,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/stellarwp/schema.git",
-                "reference": "f223e05f6e63f92f1021aa0ffde11f386be336fb"
+                "reference": "6ba26edbad8017653cc646e737fff5ef14bb6672"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stellarwp/schema/zipball/f223e05f6e63f92f1021aa0ffde11f386be336fb",
-                "reference": "f223e05f6e63f92f1021aa0ffde11f386be336fb",
+                "url": "https://api.github.com/repos/stellarwp/schema/zipball/6ba26edbad8017653cc646e737fff5ef14bb6672",
+                "reference": "6ba26edbad8017653cc646e737fff5ef14bb6672",
                 "shasum": ""
             },
             "require": {
@@ -3704,7 +3704,7 @@
                 "issues": "https://github.com/stellarwp/schema/issues",
                 "source": "https://github.com/stellarwp/schema/tree/feat/v3-strict-column-definitions"
             },
-            "time": "2025-09-21T15:04:42+00:00"
+            "time": "2025-09-22T13:19:55+00:00"
         },
         {
             "name": "symfony/browser-kit",
