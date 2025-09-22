@@ -14,6 +14,9 @@ use BadMethodCallException;
 use StellarWP\Models\Contracts\SchemaModel as SchemaModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
 use StellarWP\DB\DB;
+use StellarWP\Schema\Tables\Contracts\Table_Interface;
+use StellarWP\Schema\Tables\Contracts\Table_Schema_Interface;
+use RuntimeException;
 
 /**
  * The schema model.
@@ -47,7 +50,29 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( $this->getPropertyDefinitionsFromSchema(), $attributes );
 	}
 
-	abstract public function getTableInterface();
+	abstract public function getTableInterface(): Table_Interface;
+
+	/**
+	 * Gets the primary value of the model.
+	 *
+	 * @since TBD
+	 *
+	 * @return mixed
+	 */
+	public function getPrimaryValue() {
+		return $this->getAttribute( $this->getPrimaryColumn() );
+	}
+
+	/**
+	 * Gets the primary column of the model.
+	 *
+	 * @since TBD
+	 *
+	 * @return string
+	 */
+	public function getPrimaryColumn(): string {
+		return $this->getTableInterface()::uid_column();
+	}
 
 	/**
 	 * Magic method to get the relationships of the model.
@@ -121,7 +146,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 		}
 
 		if ( $this->getRelationships()[ $key ]['type'] === Relationship::MANY_TO_MANY ) {
-			$this->getRelationships()[ $key ]['through']::delete( $this->get_primary_value(), $this->getRelationships()[ $key ]['columns']['this'] );
+			$this->getRelationships()[ $key ]['through']::delete( $this->getPrimaryValue(), $this->getRelationships()[ $key ]['columns']['this'] );
 		}
 	}
 
@@ -193,7 +218,17 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	private function getPropertyDefinitionsFromSchema(): array {
-		return [];
+		$table_interface = $this->getTableInterface();
+		/** @var Table_Schema_Interface $table_schema */
+		$table_schema = $table_interface::get_current_schema();
+
+		$property_definitions = [];
+
+		foreach ( $table_schema->get_columns() as $column ) {
+			$property_definitions[ $column->get_name() ] = ( new ModelPropertyDefinition() )->type( $column->get_type() )->nullable( $column->get_nullable() )->default( $column->get_default() );
+		}
+
+		return $property_definitions;
 	}
 
 	/**
@@ -247,7 +282,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 						DB::prepare(
 							'WHERE %i = %d',
 							$relationship['columns']['this'],
-							$this->get_primary_value()
+							$this->getPrimaryValue()
 						),
 						100,
 						ARRAY_A,
@@ -276,7 +311,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 				$insert_data = [];
 				foreach ( $this->relationship_data[ $key ]['insert'] as $insert_id ) {
 					$insert_data[] = [
-						$this->getRelationships()[ $key ]['columns']['this']  => $this->get_primary_value(),
+						$this->getRelationships()[ $key ]['columns']['this']  => $this->getPrimaryValue(),
 						$this->getRelationships()[ $key ]['columns']['other'] => $insert_id,
 					];
 				}
@@ -285,7 +320,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 				$relationship['through']::delete_many(
 					$this->relationship_data[ $key ]['insert'],
 					$this->getRelationships()[ $key ]['columns']['other'],
-					DB::prepare( ' AND %i = %d', $this->getRelationships()[ $key ]['columns']['this'], $this->get_primary_value() )
+					DB::prepare( ' AND %i = %d', $this->getRelationships()[ $key ]['columns']['this'], $this->getPrimaryValue() )
 				);
 
 				$relationship['through']::insert_many( $insert_data );
@@ -295,10 +330,67 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 				$relationship['through']::delete_many(
 					$this->relationship_data[ $key ]['delete'],
 					$this->get_relationships()[ $key ]['columns']['other'],
-					DB::prepare( ' AND %i = %d', $this->get_relationships()[ $key ]['columns']['this'], $this->get_primary_value() )
+					DB::prepare( ' AND %i = %d', $this->get_relationships()[ $key ]['columns']['this'], $this->getPrimaryValue() )
 				);
 			}
 		}
+	}
+
+	/**
+	 * Saves the model.
+	 *
+	 * @since TBD
+	 *
+	 * @return int The id of the saved model.
+	 *
+	 * @throws RuntimeException If the model fails to save.
+	 */
+	public function save(): int {
+		if ( ! $this->isDirty() ) {
+			$this->saveRelationshipData();
+			return $this->getPrimaryValue();
+		}
+
+		$table_interface = $this->getTableInterface();
+		$result          = $table_interface::upsert( $this->toArray() );
+
+		if ( ! $result ) {
+			throw new RuntimeException( __( 'Failed to save the model.', 'tribe-common' ) );
+		}
+
+		$id = $this->getPrimaryValue();
+
+		if ( ! $id ) {
+			$id = DB::last_insert_id();
+			$this->setAttribute( $this->getPrimaryColumn(), $id );
+		}
+
+		$this->commitChanges();
+
+		$this->saveRelationshipData();
+
+		return $id;
+	}
+
+	/**
+	 * Deletes the model.
+	 *
+	 * @since TBD
+	 *
+	 * @return bool Whether the model was deleted.
+	 *
+	 * @throws RuntimeException If the model ID required to delete the model is not set.
+	 */
+	public function delete(): bool {
+		$uid = $this->getPrimaryValue();
+
+		if ( ! $uid ) {
+			throw new RuntimeException( __( 'Model ID is required to delete the model.', 'tribe-common' ) );
+		}
+
+		$this->deleteAllRelationshipData();
+
+		return $this->getTableInterface()::delete( $uid );
 	}
 
 	/**

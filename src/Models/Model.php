@@ -360,7 +360,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool {
+	public function isClean( ?string $attribute = null ) : bool {
 		return ! $this->isDirty( $attribute );
 	}
 
@@ -373,7 +373,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool {
+	public function isDirty( ?string $attribute = null ) : bool {
 		if ( ! $attribute ) {
 			return $this->propertyCollection->isDirty();
 		}

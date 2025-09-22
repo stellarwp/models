@@ -1,0 +1,38 @@
+<?php
+use StellarWP\Models\Config;
+use StellarWP\Schema\Config as Schema_Config;
+use StellarWP\Schema\Register;
+use StellarWP\Models\Tests\Schema\MockModelTable;
+use StellarWP\Models\Tests\Schema\Container;
+use StellarWP\DB\DB;
+use lucatume\DI52\Container as DI52_Container;
+
+Schema_Config::set_db( DB::class );
+Schema_Config::set_container( tests_models_get_container() );
+
+Config::setHookPrefix( 'test_' );
+
+tests_models_drop_tables();
+
+Register::table( MockModelTable::class );
+
+tests_add_filter(
+	'shutdown',
+	'tests_models_drop_tables'
+);
+
+function tests_models_drop_tables() {
+	DB::query( DB::prepare( "DROP TABLE IF EXISTS %i", MockModelTable::table_name() ) );
+}
+
+function tests_models_get_container() : Container {
+	static $container = null;
+
+	if ( null !== $container ) {
+		return $container;
+	}
+
+	$container = new Container();
+
+	return $container;
+}
