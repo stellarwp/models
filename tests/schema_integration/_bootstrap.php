@@ -3,6 +3,7 @@ use StellarWP\Models\Config;
 use StellarWP\Schema\Config as Schema_Config;
 use StellarWP\Schema\Register;
 use StellarWP\Models\Tests\Schema\MockModelTable;
+use StellarWP\Models\Tests\Schema\MockRelationshipTable;
 use StellarWP\Models\Tests\Schema\Container;
 use StellarWP\DB\DB;
 
@@ -14,6 +15,7 @@ Config::setHookPrefix( 'test_' );
 tests_models_drop_tables();
 
 Register::table( MockModelTable::class );
+Register::table( MockRelationshipTable::class );
 
 tests_add_filter(
 	'shutdown',
@@ -22,6 +24,7 @@ tests_add_filter(
 
 function tests_models_drop_tables() {
 	DB::query( DB::prepare( "DROP TABLE IF EXISTS %i", MockModelTable::table_name() ) );
+	DB::query( DB::prepare( "DROP TABLE IF EXISTS %i", MockRelationshipTable::table_name() ) );
 }
 
 function tests_models_get_container() : Container {

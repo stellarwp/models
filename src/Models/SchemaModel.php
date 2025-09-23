@@ -33,7 +33,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 	 *
 	 * @var array
 	 */
-	private array $relationship_data = [];
+	private array $relationshipData = [];
 
 	/**
 	 * Constructor.
@@ -43,12 +43,6 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	public function __construct( array $attributes = [] ) {
-		if ( ! empty( static::getPropertyDefinitions() ) ) {
-			throw new InvalidArgumentException( 'Schema models do not accept property definitions. Define a schema interface to link with instead.' );
-		}
-
-		unset( static::$cached_definitions[ static::class ] );
-
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( $this->getPropertyDefinitionsFromSchema(), $attributes );
 	}
 
@@ -167,19 +161,21 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			throw new InvalidArgumentException( "Relationship {$key} does not exist." );
 		}
 
-		if ( ! isset( $this->relationship_data[ $key ] ) ) {
-			$this->relationship_data[ $key ] = [];
+		if ( ! isset( $this->relationshipData[ $key ] ) ) {
+			$this->relationshipData[ $key ] = [];
 		}
 
-		if ( ! isset( $this->relationship_data[ $key ]['insert'] ) ) {
-			$this->relationship_data[ $key ]['insert'] = [];
+		if ( ! isset( $this->relationshipData[ $key ]['insert'] ) ) {
+			$this->relationshipData[ $key ]['insert'] = [];
 		}
 
-		$this->relationship_data[ $key ]['insert'][] = $id;
+		$this->relationshipData[ $key ]['insert'][] = $id;
 
-		if ( ! empty( $this->relationship_data[ $key ]['delete'] ) ) {
-			$this->relationship_data[ $key ]['delete'] = array_diff( $this->relationship_data[ $key ]['delete'], [ $id ] );
+		if ( ! empty( $this->relationshipData[ $key ]['delete'] ) ) {
+			$this->relationshipData[ $key ]['delete'] = array_diff( $this->relationshipData[ $key ]['delete'], [ $id ] );
 		}
+
+		$this->relationshipData[ $key ]['current'] = array_unique( array_merge( $this->relationshipData[ $key ]['current'] ?? [], [ $id ] ) );
 	}
 
 	/**
@@ -197,19 +193,21 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			throw new InvalidArgumentException( "Relationship {$key} does not exist." );
 		}
 
-		if ( ! isset( $this->relationship_data[ $key ] ) ) {
-			$this->relationship_data[ $key ] = [];
+		if ( ! isset( $this->relationshipData[ $key ] ) ) {
+			$this->relationshipData[ $key ] = [];
 		}
 
-		if ( ! isset( $this->relationship_data[ $key ]['delete'] ) ) {
-			$this->relationship_data[ $key ]['delete'] = [];
+		if ( ! isset( $this->relationshipData[ $key ]['delete'] ) ) {
+			$this->relationshipData[ $key ]['delete'] = [];
 		}
 
-		$this->relationship_data[ $key ]['delete'][] = $id;
+		$this->relationshipData[ $key ]['delete'][] = $id;
 
-		if ( ! empty( $this->relationship_data[ $key ]['insert'] ) ) {
-			$this->relationship_data[ $key ]['insert'] = array_diff( $this->relationship_data[ $key ]['insert'], [ $id ] );
+		if ( ! empty( $this->relationshipData[ $key ]['insert'] ) ) {
+			$this->relationshipData[ $key ]['insert'] = array_diff( $this->relationshipData[ $key ]['insert'], [ $id ] );
 		}
+
+		$this->relationshipData[ $key ]['current'] = array_diff( $this->relationshipData[ $key ]['current'] ?? [], [ $id ] );
 	}
 
 	/**
@@ -257,7 +255,34 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 	 * @param mixed $value Relationship value.
 	 */
 	protected function setRelationship( string $key, $value ): void {
-		$this->cachedRelations[ $key ] = $value;
+		$old_value = $this->relationshipData[ $key ]['current'] ?? null;
+		$this->relationshipData[ $key ]['current'] = $value;
+
+		if ( $old_value ) {
+			if ( is_array( $old_value ) ) {
+				foreach ( $old_value as $i ) {
+					$this->removeFromRelationship( $key, $i );
+				}
+			} else {
+				$this->removeFromRelationship( $key, $old_value );
+			}
+		}
+
+		if ( is_array( $value ) ) {
+			foreach ( $value as $i ) {
+				if ( ! is_int( $i ) ) {
+					throw new InvalidArgumentException( "Relationship {$key} must be an integer." );
+				}
+
+				$this->addToRelationship( $key, $i );
+			}
+		} else {
+			if ( ! is_int( $value ) ) {
+				throw new InvalidArgumentException( "Relationship {$key} must be an integer." );
+			}
+
+			$this->addToRelationship( $key, $value );
+		}
 	}
 
 	/**
@@ -275,8 +300,8 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			throw new InvalidArgumentException( "Relationship {$key} does not exist." );
 		}
 
-		if ( $this->hasCachedRelationship( $key ) ) {
-			return $this->cachedRelations[ $key ];
+		if ( isset( $this->relationshipData[ $key ]['current'] ) ) {
+			return $this->relationshipData[ $key ]['current'];
 		}
 
 		$relationship = $relationships[ $key ];
@@ -287,24 +312,19 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 			case Relationship::BELONGS_TO:
 			case Relationship::HAS_ONE:
 				if ( 'post' === $relationship['entity'] ) {
-					return $this->cachedRelations[ $key ] = get_post( $this->getAttribute( $key ) );
+					return $this->relationshipData[ $key ]['current'] = get_post( $this->getAttribute( $key ) );
 				}
 
 				throw new InvalidArgumentException( "Relationship {$key} is not a post relationship." );
 			case Relationship::HAS_MANY:
 			case Relationship::BELONGS_TO_MANY:
 			case Relationship::MANY_TO_MANY:
-				return $this->cachedRelations[ $key ] = iterator_to_array(
-					$relationship['through']::fetch_all_where(
-						DB::prepare(
-							'WHERE %i = %d',
-							$relationship['columns']['this'],
-							$this->getPrimaryValue()
-						),
-						100,
-						ARRAY_A,
-						$relationship['columns']['other'] . ' ASC'
-					)
+				return $this->relationshipData[ $key ]['current'] = wp_list_pluck(
+					$relationship['through']::get_all_by(
+						$relationship['columns']['this'],
+						$this->getPrimaryValue()
+					),
+					$relationship['columns']['other']
 				);
 		}
 
@@ -324,9 +344,9 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 				continue;
 			}
 
-			if ( ! empty( $this->relationship_data[ $key ]['insert'] ) ) {
+			if ( ! empty( $this->relationshipData[ $key ]['insert'] ) ) {
 				$insert_data = [];
-				foreach ( $this->relationship_data[ $key ]['insert'] as $insert_id ) {
+				foreach ( $this->relationshipData[ $key ]['insert'] as $insert_id ) {
 					$insert_data[] = [
 						$this->getRelationships()[ $key ]['columns']['this']  => $this->getPrimaryValue(),
 						$this->getRelationships()[ $key ]['columns']['other'] => $insert_id,
@@ -335,7 +355,7 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 
 				// First delete them to avoid duplicates.
 				$relationship['through']::delete_many(
-					$this->relationship_data[ $key ]['insert'],
+					$this->relationshipData[ $key ]['insert'],
 					$this->getRelationships()[ $key ]['columns']['other'],
 					DB::prepare( ' AND %i = %d', $this->getRelationships()[ $key ]['columns']['this'], $this->getPrimaryValue() )
 				);
@@ -343,9 +363,9 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 				$relationship['through']::insert_many( $insert_data );
 			}
 
-			if ( ! empty( $this->relationship_data[ $key ]['delete'] ) ) {
+			if ( ! empty( $this->relationshipData[ $key ]['delete'] ) ) {
 				$relationship['through']::delete_many(
-					$this->relationship_data[ $key ]['delete'],
+					$this->relationshipData[ $key ]['delete'],
 					$this->get_relationships()[ $key ]['columns']['other'],
 					DB::prepare( ' AND %i = %d', $this->get_relationships()[ $key ]['columns']['this'], $this->getPrimaryValue() )
 				);
@@ -483,21 +503,6 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 
 		$model = new static();
 
-		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
-		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
-			$extraKeys = array_diff_key( (array) $data, static::$properties );
-			if ( ! empty( $extraKeys ) ) {
-				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
-			}
-		}
-
-		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
-			$missingKeys = array_diff_key( static::$properties, (array) $data );
-			if ( ! empty( $missingKeys ) ) {
-				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
-			}
-		}
-
 		foreach (static::propertyKeys() as $key) {
 			$property_definition = static::getPropertyDefinition( $key );
 			if ( $key !== $model->getPrimaryColumn() && ! array_key_exists( $key, $data ) && ! $property_definition->hasDefault() ) {
@@ -510,6 +515,14 @@ abstract class SchemaModel extends Model implements SchemaModelInterface {
 
 			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
 			$model->setAttribute( $key, static::castValueForProperty( static::getPropertyDefinition( $key ), $data[ $key ], $key ) );
+		}
+
+		foreach ( $model->getRelationships() as $key => $relationship ) {
+			if ( ! isset( $data[ $key ] ) ) {
+				continue;
+			}
+
+			$model->setRelationship( $key, $data[ $key ] );
 		}
 
 		if ( $model->getPrimaryValue() ) {

@@ -13,7 +13,7 @@ use StellarWP\Schema\Columns\Integer_Column;
 use StellarWP\Schema\Columns\DateTime_Column;
 use StellarWP\Schema\Columns\PHP_Types;
 
-class MockModelTable extends Table {
+class MockRelationshipModelTable extends Table {
 	const SCHEMA_VERSION = '0.0.1-test';
 
 	protected static $base_table_name = 'test_repository_table';
@@ -40,7 +40,7 @@ class MockModelTable extends Table {
 		];
 	}
 
-	public static function transform_from_array( array $data ): MockModelSchema {
-		return MockModelSchema::fromData( $data );
+	public static function transform_from_array( array $data ): MockModelSchemaWithRelationship {
+		return MockModelSchemaWithRelationship::fromData( $data );
 	}
 }
