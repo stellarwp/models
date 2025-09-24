@@ -4,3 +4,4 @@ repo/
 vendor/
 .idea
 .vscode
+tests/_support/_generated
