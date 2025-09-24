@@ -33,9 +33,7 @@
     "codeception/module-webdriver": "^1.0",
     "codeception/util-universalframework": "^1.0",
     "lucatume/wp-browser": "^3.0.14",
-    "phpunit/phpunit": "~6.0",
-    "stellarwp/schema": "dev-feat/v3-strict-column-definitions",
-    "lucatume/di52": "^4.0"
+    "phpunit/phpunit": "~6.0"
   },
   "autoload": {
     "psr-4": {
