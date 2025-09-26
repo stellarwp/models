@@ -294,35 +294,40 @@ class TestModel extends ModelsTestCase {
 	 * @since 2.0.0
 	 */
 	public function testFromDataShouldCreateInstanceWithCorrectTypes(): void {
-		self::markTestSkipped( 'This is not finished yet.' );
-
 		$model = MockModel::fromData( [
 			'id' => '1',
 			'firstName' => 'Bill',
 			'lastName' => 'Murray',
 			'emails' => [ 'billMurray@givewp.com' ],
-			'microseconds' => '1234567890',
-			'number' => '1234567890',
-		], MockModel::BUILD_MODE_IGNORE_EXTRA & MockModel::BUILD_MODE_IGNORE_MISSING );
+			'microseconds' => '1234567890.5',
+			'number' => '42',
+			'date' => new \DateTime('2023-01-01'),
+		] );
 
 		$this->assertEquals( 1, $model->id );
 		$this->assertEquals( 'Bill', $model->firstName );
 		$this->assertEquals( 'Murray', $model->lastName );
 		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
-		$this->assertEquals( 1234567890, $model->microseconds );
-		$this->assertEquals( 1234567890, $model->number );
+		$this->assertEquals( 1234567890.5, $model->microseconds );
+		$this->assertEquals( 42, $model->number );
+		$this->assertInstanceOf( \DateTime::class, $model->date );
 	}
 
 	/**
 	 * @since 2.0.0
 	 */
 	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
-		self::markTestSkipped( 'This is not finished yet.' );
-
 		$this->expectException( Config::getInvalidArgumentException() );
+		$this->expectExceptionMessage( "Unexpected type: 'datetime'. To support additional types, implement a custom castValueForProperty() method." );
 
 		MockModel::fromData( [
-			'date' => '123',
+			'id' => 1,
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [],
+			'microseconds' => 123.45,
+			'number' => 123,
+			'date' => '2023-01-01',
 		] );
 	}
 
