@@ -404,6 +404,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		foreach (static::$properties as $key => $type) {
 			if ( ! array_key_exists( $key, $data ) ) {
+				// Skip missing properties when BUILD_MODE_IGNORE_MISSING is set
+				if ( $mode & self::BUILD_MODE_IGNORE_MISSING ) {
+					continue;
+				}
 				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
 			}
 
