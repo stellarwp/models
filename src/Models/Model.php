@@ -55,7 +55,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
-	public function __construct( array $attributes = [] ) {
+	final public function __construct( array $attributes = [] ) {
 		$this->fill( array_merge( static::getPropertyDefaults(), $attributes ) );
 
 		$this->syncOriginal();
