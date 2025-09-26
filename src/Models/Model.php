@@ -157,7 +157,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return mixed|array
 	 */
-	public function getOriginal( string $key = null ) {
+	public function getOriginal( ?string $key = null ) {
 		return $key ? $this->original[ $key ] : $this->original;
 	}
 
@@ -322,7 +322,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool {
+	public function isClean( ?string $attribute = null ) : bool {
 		return ! $this->isDirty( $attribute );
 	}
 
@@ -335,7 +335,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool {
+	public function isDirty( ?string $attribute = null ) : bool {
 		if ( ! $attribute ) {
 			return (bool) $this->getDirty();
 		}

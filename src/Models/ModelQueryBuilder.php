@@ -40,7 +40,7 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @param null|string $column
 	 */
-	public function count( $column = null ) : int {
+	public function count( ?string $column = null ) : int {
 		$column = ( ! $column || $column === '*' ) ? '1' : trim( $column );
 
 		if ( '1' === $column ) {

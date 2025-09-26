@@ -56,7 +56,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @return mixed|array
 	 */
-	public function getOriginal( string $key = null );
+	public function getOriginal( ?string $key = null );
 
 	/**
 	 * Determines if the model has the given property.
@@ -79,7 +79,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool;
+	public function isClean( ?string $attribute = null ) : bool;
 
 	/**
 	 * Determines if a given attribute is dirty.
@@ -90,7 +90,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool;
+	public function isDirty( ?string $attribute = null ) : bool;
 
 	/**
 	 * Validates an attribute to a PHP type.
