@@ -243,10 +243,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @throws InvalidArgumentException If the property key is not a string.
 	 */
+	public static function getPropertyDefinitions(): array {
 		if ( isset( static::$cached_definitions[ static::class ] ) ) {
 			return static::$cached_definitions[ static::class ];
 		}
-	public static function getPropertyDefinitions(): array {
 
 		$definitions = array_merge( static::$properties, static::properties() );
 
