@@ -314,9 +314,8 @@ class TestModel extends ModelsTestCase {
 	 * @since 2.0.0
 	 */
 	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
-		self::markTestSkipped( 'This is not finished yet.' );
-
 		$this->expectException( Config::getInvalidArgumentException() );
+		$this->expectExceptionMessage( "Unexpected type: 'DateTime'. To support additional types, overload this method or use Definition casting." );
 
 		MockModel::fromData( [
 			'id' => 1,

@@ -100,7 +100,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			case 'float':
 				return (float) filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT,FILTER_FLAG_ALLOW_FRACTION );
 			default:
-				Config::throwInvalidArgumentException( "Unexpected type: '$type'. To support additional types, overload this method or use Definition casting." );
+				Config::throwInvalidArgumentException( "Unexpected type: '{$type[0]}'. To support additional types, overload this method or use Definition casting." );
 		}
 	}
 
