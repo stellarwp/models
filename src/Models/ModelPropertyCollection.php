@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace StellarWP\Models;
 
+use Countable;
+use InvalidArgumentException;
+use IteratorAggregate;
+
 /**
  * A collection of properties for a model.
  *
  * Some philosophical notes:
  * 		* The collection is immutable. Once created, the collection cannot be changed.
+ *
+ * @implements IteratorAggregate<string,ModelProperty>
  */
-class ModelPropertyCollection implements \Countable, \IteratorAggregate {
+class ModelPropertyCollection implements Countable, IteratorAggregate {
 	/**
 	 * The properties.
 	 *
@@ -27,11 +33,11 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	public function __construct( array $properties = [] ) {
 		foreach ( $properties as $key => $property ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $property instanceof ModelProperty ) {
-				throw new \InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
+				throw new InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
 			}
 
 			$this->properties[$key] = $property;
@@ -80,11 +86,11 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 
 		foreach ( $propertyDefinitions as $key => $definition ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $definition instanceof ModelPropertyDefinition ) {
-				throw new \InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
+				throw new InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
 			}
 
 			if ( isset( $initialValues[$key] ) ) {
@@ -140,7 +146,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 */
 	public function getOrFail( string $key ): ModelProperty {
 		if ( ! $this->has( $key ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $this->properties[$key];
@@ -269,7 +275,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	public function setValues( array $values ) {
 		foreach ( $values as $key => $value ) {
 			if ( ! $this->has( $key ) ) {
-				throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+				throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 			}
 
 			$this->properties[$key]->setValue( $value );

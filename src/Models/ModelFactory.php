@@ -33,15 +33,17 @@ abstract class ModelFactory {
 
 	/**
 	 * Define the model's default state.
+	 *
+	 * @return array<string,mixed>
 	 */
 	abstract public function definition() : array;
 
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes
 	 *
-	 * @return M|M[]
+	 * @return M|list<M>
 	 */
 	public function make( array $attributes = [] ) {
 		$results = [];
@@ -69,9 +71,9 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes
 	 *
-	 * @return M|M[]
+	 * @return M|list<M>
 	 * @throws Exception
 	 */
 	public function create( array $attributes = [] ) {

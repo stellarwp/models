@@ -48,7 +48,9 @@ class ModelQueryBuilder extends QueryBuilder {
 		}
 		$this->selects[] = new RawSQL( 'SELECT COUNT(%1s) AS count', $column );
 
-		return +parent::get()->count;
+		/** @var object{count:numeric-string} $result */
+		$result = parent::get();
+		return (int) $result->count;
 	}
 
 	/**
@@ -79,7 +81,7 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return M[]|null
+	 * @return list<M>|null
 	 */
 	public function getAll( $output = self::MODEL ) : ?array {
 		if ( $output !== self::MODEL ) {

@@ -26,11 +26,15 @@ class ModelProperty {
 
 	/**
 	 * The original value of the property.
+	 *
+	 * @var mixed
 	 */
 	private $originalValue;
 
 	/**
 	 * The property value.
+	 *
+	 * @var mixed
 	 */
 	private $value;
 

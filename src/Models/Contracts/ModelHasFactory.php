@@ -11,7 +11,7 @@ interface ModelHasFactory {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @return ModelFactory
+	 * @return ModelFactory<static>
 	 */
 	public static function factory();
 }

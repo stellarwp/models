@@ -2,6 +2,7 @@
 
 namespace StellarWP\Models;
 
+use InvalidArgumentException;
 use JsonSerializable;
 use RuntimeException;
 use StellarWP\Models\Contracts\Arrayable;
@@ -23,7 +24,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * The model properties assigned to their types.
 	 *
-	 * @var array<string,string|array>
+	 * @var array<string,string|array{0:string,1:mixed}>
 	 */
 	protected static $properties = [];
 
@@ -37,7 +38,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
 	 *
-	 * @var Model[]
+	 * @var array<string,Model|list<Model>>
 	 */
 	private $cachedRelations = [];
 
@@ -85,7 +86,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$type = $definition->getType();
 		if ( count( $type ) !== 1 ) {
-			throw new \InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
+			throw new InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
 		}
 
 		switch ( $type[0] ) {
@@ -136,7 +137,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * A more robust, alternative way to define properties for the model than static::$properties.
 	 *
-	 * @return array<string,ModelPropertyDefinition|array<string,mixed>>
+	 * @return array<string,ModelPropertyDefinition>
 	 */
 	protected static function properties(): array {
 		return [];
@@ -188,7 +189,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$definitions = static::getPropertyDefinitions();
 
 		if ( ! isset( $definitions[ $key ] ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $definitions[ $key ];
@@ -209,7 +210,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 			foreach ( $definitions as $key => $definition ) {
 				if ( ! is_string( $key ) ) {
-					throw new \InvalidArgumentException( 'Property key must be a string.' );
+					throw new InvalidArgumentException( 'Property key must be a string.' );
 				}
 
 				if ( ! $definition instanceof ModelPropertyDefinition ) {
@@ -257,7 +258,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param string $key Relationship name.
 	 *
-	 * @return Model|Model[]
+	 * @return Model|list<Model>|null
 	 */
 	protected function getRelationship( string $key ) {
 		if ( ! is_callable( [ $this, $key ] ) ) {
@@ -384,7 +385,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Constructs a model instance from database query data.
 	 *
-	 * @param object|array $queryData
+	 * @param array<string,mixed>|object $data
 	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
 	 * @return static
 	 */
@@ -433,7 +434,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return int[]|string[]
+	 * @return list<string>
 	 */
 	public static function propertyKeys() : array {
 		return array_keys( static::$properties );
