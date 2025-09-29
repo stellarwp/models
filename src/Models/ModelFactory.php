@@ -5,9 +5,10 @@ namespace StellarWP\Models;
 use Closure;
 use Exception;
 use StellarWP\DB\DB;
+use StellarWP\Models\Contracts\ModelCrud;
 
 /**
- * @template M
+ * @template M of ModelCrud
  */
 abstract class ModelFactory {
 	/**
