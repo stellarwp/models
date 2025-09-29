@@ -12,7 +12,7 @@ use StellarWP\Models\Contracts\ModelBuildsFromData;
  * @since 1.2.2  improve model generic
  * @since 1.0.0
  *
- * @template M of ModelBuildsFromQueryData
+ * @template M of ModelBuildsFromData
  */
 class ModelQueryBuilder extends QueryBuilder {
 	public const MODEL = 'model';
@@ -40,7 +40,7 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @param null|string $column
 	 */
-	public function count( $column = null ) : int {
+	public function count( ?string $column = null ) : int {
 		$column = ( ! $column || $column === '*' ) ? '1' : trim( $column );
 
 		if ( '1' === $column ) {
@@ -71,7 +71,7 @@ class ModelQueryBuilder extends QueryBuilder {
 			return null;
 		}
 
-		return $this->model::fromQueryData( $row );
+		return $this->model::fromData( $row );
 	}
 
 	/**
@@ -92,6 +92,6 @@ class ModelQueryBuilder extends QueryBuilder {
 			return null;
 		}
 
-		return array_map( [ $this->model, 'fromQueryData' ], $results );
+		return array_map( [ $this->model, 'fromData' ], $results );
 	}
 }

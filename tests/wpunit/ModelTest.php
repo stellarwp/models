@@ -4,6 +4,7 @@ namespace StellarWP\Models;
 
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
+use StellarWP\Models\Tests\MockModelWithAfterConstruct;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
 /**
@@ -290,23 +291,23 @@ class TestModel extends ModelsTestCase {
 	 * @since 2.0.0
 	 */
 	public function testFromDataShouldCreateInstanceWithCorrectTypes(): void {
-		self::markTestSkipped( 'This is not finished yet.' );
-
 		$model = MockModel::fromData( [
 			'id' => '1',
 			'firstName' => 'Bill',
 			'lastName' => 'Murray',
 			'emails' => [ 'billMurray@givewp.com' ],
-			'microseconds' => '1234567890',
-			'number' => '1234567890',
-		], MockModel::BUILD_MODE_IGNORE_EXTRA & MockModel::BUILD_MODE_IGNORE_MISSING );
+			'microseconds' => '1234567890.5',
+			'number' => '42',
+			'date' => new \DateTime('2023-01-01'),
+		] );
 
 		$this->assertEquals( 1, $model->id );
 		$this->assertEquals( 'Bill', $model->firstName );
 		$this->assertEquals( 'Murray', $model->lastName );
 		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
-		$this->assertEquals( 1234567890, $model->microseconds );
-		$this->assertEquals( 1234567890, $model->number );
+		$this->assertEquals( 1234567890.5, $model->microseconds );
+		$this->assertEquals( 42, $model->number );
+		$this->assertInstanceOf( \DateTime::class, $model->date );
 	}
 
 	/**
@@ -318,8 +319,26 @@ class TestModel extends ModelsTestCase {
 		$this->expectException( Config::getInvalidArgumentException() );
 
 		MockModel::fromData( [
-			'date' => '123',
+			'id' => 1,
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [],
+			'microseconds' => 123.45,
+			'number' => 123,
+			'date' => '2023-01-01',
 		] );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	public function testOnConstructedIsCalledDuringConstruction() {
+		$model = new MockModelWithAfterConstruct( [ 'id' => 1, 'name' => 'Test' ] );
+
+		$this->assertTrue( $model->afterConstructCalled );
+		$this->assertEquals( [ 'id' => 1, 'name' => 'Test' ], $model->constructedAttributes );
 	}
 
 	/**

@@ -48,10 +48,20 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
-	public function __construct( array $attributes = [] ) {
+	final public function __construct( array $attributes = [] ) {
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( static::getPropertyDefinitions(), $attributes );
+		$this->afterConstruct();
 	}
 
+	/**
+	 * This method is meant to be overridden by the model to perform actions after the model is constructed.
+	 *
+	 * @since 2.0.0
+	 */
+	protected function afterConstruct() {
+		// This method is meant to be overridden by the model to perform actions after the model is constructed.
+		return;
+	}
 	/**
 	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
 	 * additional types, especially class types, this method can be overridden.
@@ -224,7 +234,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return mixed|array
 	 */
-	public function getOriginal( string $key = null ) {
+	public function getOriginal( ?string $key = null ) {
 		return $key ? $this->propertyCollection->getOrFail( $key )->getOriginalValue() : $this->propertyCollection->getOriginalValues();
 	}
 
@@ -323,7 +333,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool {
+	public function isClean( ?string $attribute = null ) : bool {
 		return ! $this->isDirty( $attribute );
 	}
 
@@ -336,7 +346,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool {
+	public function isDirty( ?string $attribute = null ) : bool {
 		if ( ! $attribute ) {
 			return $this->propertyCollection->isDirty();
 		}
