@@ -13,7 +13,7 @@ class MockModelWithAfterConstruct extends Model {
 	public bool $afterConstructCalled = false;
 	public array $constructedAttributes = [];
 
-	protected function afterConstruct() {
+	protected function afterConstruct(): void {
 		$this->afterConstructCalled = true;
 		$this->constructedAttributes = $this->toArray();
 	}
