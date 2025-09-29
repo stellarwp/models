@@ -5,11 +5,17 @@ declare(strict_types=1);
 namespace StellarWP\Models;
 
 use Closure;
-use DateTimeInterface;
 
+/**
+ * Defines a model property with its type, default value, and validation rules.
+ *
+ * @since 2.0.0
+ */
 class ModelPropertyDefinition {
 	/**
 	 * The default value of the property.
+	 *
+	 * @since 2.0.0
 	 *
 	 * @var mixed|Closure
 	 */
@@ -18,32 +24,52 @@ class ModelPropertyDefinition {
 	/**
 	 * The method to cast the property value.
 	 *
+	 * @since 2.0.0
+	 *
 	 * @var Closure|null A closure that accepts the value and property instance as parameters and returns the cast value.
 	 */
 	private Closure $castMethod;
 
 	/**
 	 * Whether the definition is locked. Once locked, the definition cannot be changed.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var bool
 	 */
 	private bool $locked = false;
 
 	/**
 	 * Whether the property is nullable.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var bool
 	 */
 	private bool $nullable = false;
 
 	/**
 	 * Whether the property is required.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var bool
 	 */
 	private bool $required = false;
 
 	/**
 	 * Whether the property is required on save.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var bool
 	 */
 	private bool $requiredOnSave = false;
 
 	/**
 	 * The type of the property.
+	 *
+	 * @since 2.0.0
 	 *
 	 * @var string[]
 	 */
@@ -51,6 +77,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Set the default value of the property.
+	 *
+	 * @since 2.0.0
 	 *
 	 * @param mixed|Closure $default The default value of the property.
 	 */
@@ -64,6 +92,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property can cast the value.
+	 *
+	 * @since 2.0.0
 	 */
 	public function canCast(): bool {
 		return isset( $this->castMethod );
@@ -72,9 +102,17 @@ class ModelPropertyDefinition {
 	/**
 	 * Cast the property value.
 	 *
+	 * @since 2.0.0
+	 *
 	 * @param mixed $value The value to cast.
+	 *
+	 * @return mixed
+	 *
+	 * @throws \RuntimeException When no cast method is set.
 	 */
 	public function cast( $value ) {
+		$this->checkLock();
+
 		if ( ! $this->canCast() ) {
 			throw new \RuntimeException( 'No cast method set' );
 		}
@@ -86,6 +124,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Provides a method to cast the property value.
+	 *
+	 * @since 2.0.0
 	 */
 	public function castWith( callable $castMethod ): self {
 		$this->checkLock();
@@ -97,6 +137,10 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Check if the property is locked and throw an exception if it is.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @throws \RuntimeException When the property is locked.
 	 */
 	private function checkLock(): void {
 		if ( $this->locked ) {
@@ -106,7 +150,12 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Create a property definition from a shorthand string or array.
-	 * @param string|array{0:string,1:bool} $definition
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string|array{0:string,1:mixed} $definition The shorthand definition.
+	 *
+	 * @throws \InvalidArgumentException When the definition is invalid.
 	 */
 	public static function fromShorthand( $definition ): self {
 		$property = new self();
@@ -129,6 +178,8 @@ class ModelPropertyDefinition {
 	/**
 	 * Get the default value of the property.
 	 *
+	 * @since 2.0.0
+	 *
 	 * @return mixed
 	 */
 	public function getDefault() {
@@ -144,6 +195,8 @@ class ModelPropertyDefinition {
 	/**
 	 * Get the type of the property.
 	 *
+	 * @since 2.0.0
+	 *
 	 * @return string[]
 	 */
 	public function getType(): array {
@@ -152,6 +205,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property has a default value.
+	 *
+	 * @since 2.0.0
 	 */
 	public function hasDefault(): bool {
 		return isset( $this->default );
@@ -160,7 +215,7 @@ class ModelPropertyDefinition {
 	/**
 	 * Whether the property is locked.
 	 *
-	 * @return bool
+	 * @since 2.0.0
 	 */
 	public function isLocked(): bool {
 		return $this->locked;
@@ -168,6 +223,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property is nullable.
+	 *
+	 * @since 2.0.0
 	 */
 	public function isNullable(): bool {
 		return $this->nullable;
@@ -175,6 +232,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property is required.
+	 *
+	 * @since 2.0.0
 	 */
 	public function isRequired(): bool {
 		return $this->required;
@@ -182,6 +241,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property is required on save.
+	 *
+	 * @since 2.0.0
 	 */
 	public function isRequiredOnSave(): bool {
 		return $this->requiredOnSave;
@@ -189,6 +250,10 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property is valid for the given value.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $value The value to validate.
 	 */
 	public function isValidValue( $value ): bool {
 		$valueType = gettype( $value );
@@ -203,7 +268,7 @@ class ModelPropertyDefinition {
 			case 'boolean':
 				return $this->supportsType( 'bool' );
 			case 'array':
-				return $this->supportsType( 'array' ) || $this->supportsType( 'json' );
+				return $this->supportsType( 'array' );
 			case 'double':
 				return $this->supportsType( 'float' );
 			case 'object':
@@ -211,7 +276,7 @@ class ModelPropertyDefinition {
 					return true;
 				} else {
 					$class = get_class( $value );
-					return $this->supportsType( $class ) || is_a( $class, DateTimeInterface::class, true );
+					return $this->supportsType( $class );
 				}
 			default:
 				return false;
@@ -221,6 +286,8 @@ class ModelPropertyDefinition {
 	/**
 	 * Locks the property so it cannot be changed.
 	 * Note that once locked the property cannot be unlocked.
+	 *
+	 * @since 2.0.0
 	 */
 	public function lock(): self {
 		$this->locked = true;
@@ -228,6 +295,11 @@ class ModelPropertyDefinition {
 		return $this;
 	}
 
+	/**
+	 * Makes the property nullable.
+	 *
+	 * @since 2.0.0
+	 */
 	public function nullable(): self {
 		$this->checkLock();
 
@@ -238,6 +310,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Makes the property required.
+	 *
+	 * @since 2.0.0
 	 */
 	public function required(): self {
 		$this->checkLock();
@@ -249,6 +323,8 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Makes the property required on save.
+	 *
+	 * @since 2.0.0
 	 */
 	public function requiredOnSave(): self {
 		$this->checkLock();
@@ -260,15 +336,19 @@ class ModelPropertyDefinition {
 
 	/**
 	 * Whether the property supports the given type.
+	 *
+	 * @since 2.0.0
 	 */
 	public function supportsType( string $type ): bool {
-		return in_array( $type, $this->type, true );
+		return in_array( $type, $this->type );
 	}
 
 	/**
 	 * Set the type of the property.
 	 *
-	 * @param string[] $types The types of the property, multiple types are considered a union type.
+	 * @since 2.0.0
+	 *
+	 * @param string ...$types The types of the property, multiple types are considered a union type.
 	 */
 	public function type( string ...$types ): self {
 		$this->checkLock();

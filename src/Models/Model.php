@@ -86,10 +86,20 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
-	public function __construct( array $attributes = [] ) {
+	final public function __construct( array $attributes = [] ) {
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( static::getPropertyDefinitions(), $attributes );
+		$this->afterConstruct();
 	}
 
+	/**
+	 * This method is meant to be overridden by the model to perform actions after the model is constructed.
+	 *
+	 * @since 2.0.0
+	 */
+	protected function afterConstruct() {
+		// This method is meant to be overridden by the model to perform actions after the model is constructed.
+		return;
+	}
 	/**
 	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
 	 * additional types, especially class types, this method can be overridden.
@@ -101,8 +111,6 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param string $property The property being casted.
 	 *
 	 * @return mixed
-	 *
-	 * @throws InvalidArgumentException If the value is not valid for the property.
 	 */
 	protected static function castValueForProperty( ModelPropertyDefinition $definition, $value, string $property ) {
 		if ( $definition->isValidValue( $value ) || $value === null ) {
@@ -115,7 +123,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$type = $definition->getType();
 		if ( count( $type ) !== 1 ) {
-			throw new InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
+			throw new \InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
 		}
 
 		switch ( $type[0] ) {
@@ -130,7 +138,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			case 'float':
 				return (float) filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT,FILTER_FLAG_ALLOW_FRACTION );
 			default:
-				Config::throwInvalidArgumentException( "Unexpected type: '$type'. To support additional types, overload this method or use Definition casting." );
+				Config::throwInvalidArgumentException( "Unexpected type: '{$type[0]}'. To support additional types, overload this method or use Definition casting." );
 		}
 	}
 
@@ -235,10 +243,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @throws InvalidArgumentException If the property key is not a string.
 	 */
-	public static function getPropertyDefinitions(): array {
 		if ( isset( static::$cached_definitions[ static::class ] ) ) {
 			return static::$cached_definitions[ static::class ];
 		}
+	public static function getPropertyDefinitions(): array {
 
 		$definitions = array_merge( static::$properties, static::properties() );
 
@@ -448,6 +456,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		foreach (static::$properties as $key => $type) {
 			if ( ! array_key_exists( $key, $data ) ) {
+				// Skip missing properties when BUILD_MODE_IGNORE_MISSING is set
+				if ( $mode & self::BUILD_MODE_IGNORE_MISSING ) {
+					continue;
+				}
 				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
 			}
 
