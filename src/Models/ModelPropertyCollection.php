@@ -67,7 +67,8 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param $mode The mode as used in array_filter() which determines the arguments passed to the callback.
+	 * @param callable(ModelProperty,string):bool $callback
+	 * @param int $mode The mode as used in array_filter() which determines the arguments passed to the callback.
 	 */
 	public function filter( callable $callback, $mode = 0 ): ModelPropertyCollection {
 		return new self( array_filter( $this->properties, $callback, $mode ) );
@@ -134,6 +135,8 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Get the dirty values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function getDirtyValues(): array {
 		return $this->getDirtyProperties()->map( fn( ModelProperty $property ) => $property->getValue() );
@@ -185,6 +188,8 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Get the values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function getValues(): array {
 		return $this->map( fn( ModelProperty $property ) => $property->getValue() );
@@ -230,7 +235,10 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Map the properties. This does not use array_map because we want to preserve the keys.
 	 *
 	 * @since 2.0.0
-	 * @return array<string,mixed>
+	 *
+	 * @template TMapValue
+	 * @param callable(ModelProperty):TMapValue $callback
+	 * @return array<string,TMapValue>
 	 */
 	public function map( callable $callback ) {
 		return $this->reduce( static function( $carry, ModelProperty $property ) use ( $callback ) {
@@ -244,6 +252,12 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Reduce the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @template TReduceInitial
+	 * @template TReduceResult
+	 * @param callable(TReduceResult,ModelProperty):TReduceResult $callback
+	 * @param TReduceInitial $initial
+	 * @return TReduceResult|TReduceInitial
 	 */
 	public function reduce( callable $callback, $initial = null ) {
 		return array_reduce( $this->properties, $callback, $initial );
@@ -271,6 +285,8 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Set the values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @param array<string,mixed> $values
 	 */
 	public function setValues( array $values ) {
 		foreach ( $values as $key => $value ) {
@@ -282,6 +298,13 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 		}
 	}
 
+	/**
+	 * Execute a callback on each property and return the collection.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable(ModelProperty):void $callback
+	 */
 	public function tap( callable $callback ): self {
 		foreach ( $this->properties as $property ) {
 			$callback( $property );
