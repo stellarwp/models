@@ -7,7 +7,7 @@ use StellarWP\Models\ModelQueryBuilder;
 /**
  * @since 1.0.0
  */
-interface ModelCrud {
+interface ModelCrud extends ModelBuildsFromData {
 	/**
 	 * @since 1.0.0
 	 *

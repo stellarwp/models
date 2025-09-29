@@ -28,7 +28,7 @@ class ModelPropertyDefinition {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @var Closure|null A closure that accepts the value and property instance as parameters and returns the cast value.
+	 * @var Closure A closure that accepts the value and property instance as parameters and returns the cast value.
 	 */
 	private Closure $castMethod;
 
@@ -274,6 +274,7 @@ class ModelPropertyDefinition {
 			case 'double':
 				return $this->supportsType( 'float' );
 			case 'object':
+				/** @var object $value */
 				if ( $this->supportsType( 'object' ) ) {
 					return true;
 				} else {

@@ -40,7 +40,7 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @param null|string $column
 	 */
-	public function count( ?string $column = null ) : int {
+	public function count( $column = null ) : int {
 		$column = ( ! $column || $column === '*' ) ? '1' : trim( $column );
 
 		if ( '1' === $column ) {
@@ -60,10 +60,11 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @param string $output
 	 *
-	 * @return M|null
+	 * @return M|array<string,mixed>|object|null
 	 */
-	public function get( $output = self::MODEL ): ?Model {
+	public function get( $output = self::MODEL ) {
 		if ( $output !== self::MODEL ) {
+			/** @var array<string,mixed>|object|null */
 			return parent::get( $output );
 		}
 
@@ -73,6 +74,7 @@ class ModelQueryBuilder extends QueryBuilder {
 			return null;
 		}
 
+		/** @var array<string,mixed>|object $row */
 		return $this->model::fromData( $row );
 	}
 
@@ -81,19 +83,22 @@ class ModelQueryBuilder extends QueryBuilder {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return list<M>|null
+	 * @return list<M|array<string,mixed>|object>|null
 	 */
 	public function getAll( $output = self::MODEL ) : ?array {
 		if ( $output !== self::MODEL ) {
+			/** @var list<array<string,mixed>|object>|null */
 			return parent::getAll( $output );
 		}
 
+		/** @var list<object> */
 		$results = DB::get_results( $this->getSQL() );
 
 		if ( ! $results ) {
 			return null;
 		}
 
+		/** @var list<M> */
 		return array_map( [ $this->model, 'fromData' ], $results );
 	}
 }

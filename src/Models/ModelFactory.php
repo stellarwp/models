@@ -59,7 +59,7 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.2.3
 	 */
-	public function makeAndResolveTo($property): Closure
+	public function makeAndResolveTo(string $property): Closure
 	{
 		return function() use ($property) {
 			return is_array($results = $this->make())
@@ -92,7 +92,7 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.2.3
 	 */
-	public function createAndResolveTo( $property ): Closure {
+	public function createAndResolveTo( string $property ): Closure {
 		return function() use ( $property ) {
 			return is_array( $results = $this->create() )
 				? array_column( $results, $property )
@@ -106,6 +106,7 @@ abstract class ModelFactory {
 	 * @since 1.2.3 Add support for resolving Closures.
 	 * @since 1.0.0
 	 *
+	 * @param array<string,mixed> $attributes
 	 * @return M
 	 */
 	protected function makeInstance( array $attributes ) {
@@ -123,6 +124,8 @@ abstract class ModelFactory {
 	 * Configure the factory.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @return ModelFactory<M>
 	 */
 	public function configure() : self {
 		return $this;
@@ -132,6 +135,8 @@ abstract class ModelFactory {
 	 * Sets the number of models to generate.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @return ModelFactory<M>
 	 */
 	public function count( int $count ) : self {
 		$this->count = $count;

@@ -67,7 +67,7 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable(ModelProperty,string):bool $callback
+	 * @param callable $callback
 	 * @param int $mode The mode as used in array_filter() which determines the arguments passed to the callback.
 	 */
 	public function filter( callable $callback, $mode = 0 ): ModelPropertyCollection {
@@ -80,6 +80,7 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * @since 2.0.0
 	 *
 	 * @param array<string,ModelPropertyDefinition> $propertyDefinitions
+	 * @param array<string,mixed> $initialValues
 	 * @return ModelPropertyCollection
 	 */
 	public static function fromPropertyDefinitions( array $propertyDefinitions, array $initialValues = [] ): ModelPropertyCollection {
@@ -241,11 +242,14 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * @return array<string,TMapValue>
 	 */
 	public function map( callable $callback ) {
-		return $this->reduce( static function( $carry, ModelProperty $property ) use ( $callback ) {
+		$reducer = static function( array $carry, ModelProperty $property ) use ( $callback ): array {
 			$carry[ $property->getKey() ] = $callback( $property );
 
 			return $carry;
-		}, [] );
+		};
+
+		/** @var array<string,TMapValue> */
+		return $this->reduce( $reducer, [] );
 	}
 
 	/**
@@ -255,7 +259,7 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 *
 	 * @template TReduceInitial
 	 * @template TReduceResult
-	 * @param callable(TReduceResult,ModelProperty):TReduceResult $callback
+	 * @param callable(TReduceInitial|TReduceResult,ModelProperty):(TReduceInitial|TReduceResult) $callback
 	 * @param TReduceInitial $initial
 	 * @return TReduceResult|TReduceInitial
 	 */
@@ -288,7 +292,7 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 *
 	 * @param array<string,mixed> $values
 	 */
-	public function setValues( array $values ) {
+	public function setValues( array $values ): void {
 		foreach ( $values as $key => $value ) {
 			if ( ! $this->has( $key ) ) {
 				throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
@@ -317,6 +321,8 @@ class ModelPropertyCollection implements Countable, IteratorAggregate {
 	 * Unset a property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $key
 	 */
 	public function unsetProperty( $key ): void {
 		$this->getOrFail( $key )->unset();

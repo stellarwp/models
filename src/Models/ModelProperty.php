@@ -83,6 +83,8 @@ class ModelProperty {
 	 * Get the original value of the property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return mixed
 	 */
 	public function getOriginalValue() {
 		return $this->originalValue;
@@ -92,6 +94,8 @@ class ModelProperty {
 	 * Get the value of the property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return mixed
 	 */
 	public function getValue() {
 		return $this->value ?? null;
@@ -153,6 +157,8 @@ class ModelProperty {
 	 * Sets the value of the property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @param mixed $value
 	 */
 	public function setValue( $value ): self {
 		if ( ! $this->definition->isValidValue( $value ) ) {
