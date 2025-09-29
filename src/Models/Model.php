@@ -9,6 +9,10 @@ use StellarWP\Models\Contracts\Model as ModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
 
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
+	public const BUILD_MODE_STRICT = 0;
+	public const BUILD_MODE_IGNORE_MISSING = 1;
+	public const BUILD_MODE_IGNORE_EXTRA = 2;
+
 	/**
 	 * The model's attributes.
 	 *
@@ -51,10 +55,55 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
-	public function __construct( array $attributes = [] ) {
+	final public function __construct( array $attributes = [] ) {
 		$this->fill( array_merge( static::getPropertyDefaults(), $attributes ) );
 
 		$this->syncOriginal();
+
+		$this->afterConstruct();
+	}
+
+	/**
+	 * This method is meant to be overridden by the model to perform actions after the model is constructed.
+	 *
+	 * @since 2.0.0
+	 */
+	protected function afterConstruct() {
+		// This method is meant to be overridden by the model to perform actions after the model is constructed.
+		return;
+	}
+
+	/**
+	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
+	 * additional types, especially class types, this method can be overridden.
+	 *
+	 * @since 2.0.0 changed to static
+	 *
+	 * @param string $type
+	 * @param mixed  $value The query data value to cast, probably a string.
+	 * @param string $property The property being casted.
+	 *
+	 * @return mixed
+	 */
+	protected static function castValueForProperty( string $type, $value, string $property ) {
+		if ( static::isPropertyTypeValid( $property, $value ) || $value === null ) {
+			return $value;
+		}
+
+		switch ( $type ) {
+			case 'int':
+				return (int) $value;
+			case 'string':
+				return (string) $value;
+			case 'bool':
+				return (bool) filter_var( $value, FILTER_VALIDATE_BOOLEAN );
+			case 'array':
+				return (array) $value;
+			case 'float':
+				return (float) filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT,FILTER_FLAG_ALLOW_FRACTION );
+			default:
+				Config::throwInvalidArgumentException( "Unexpected type: '$type'. To support additional types, implement a custom castValueForProperty() method." );
+		}
 	}
 
 	/**
@@ -120,7 +169,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return mixed|array
 	 */
-	public function getOriginal( string $key = null ) {
+	public function getOriginal( ?string $key = null ) {
 		return $key ? $this->original[ $key ] : $this->original;
 	}
 
@@ -285,7 +334,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isClean( string $attribute = null ) : bool {
+	public function isClean( ?string $attribute = null ) : bool {
 		return ! $this->isDirty( $attribute );
 	}
 
@@ -298,7 +347,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return bool
 	 */
-	public function isDirty( string $attribute = null ) : bool {
+	public function isDirty( ?string $attribute = null ) : bool {
 		if ( ! $attribute ) {
 			return (bool) $this->getDirty();
 		}
@@ -352,6 +401,49 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	#[\ReturnTypeWillChange]
 	public function jsonSerialize() {
 		return get_object_vars( $this );
+	}
+
+	/**
+	 * Constructs a model instance from database query data.
+	 *
+	 * @param object|array $queryData
+	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
+	 * @return static
+	 */
+	public static function fromData($data, $mode = self::BUILD_MODE_IGNORE_EXTRA) {
+		if ( ! is_object( $data ) && ! is_array( $data ) ) {
+			Config::throwInvalidArgumentException( 'Query data must be an object or array' );
+		}
+
+		$data = (array) $data;
+
+		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
+			$extraKeys = array_diff_key( (array) $data, static::$properties );
+			if ( ! empty( $extraKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
+			}
+		}
+
+		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
+			$missingKeys = array_diff_key( static::$properties, (array) $data );
+			if ( ! empty( $missingKeys ) ) {
+				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
+			}
+		}
+
+		$instance = new static();
+
+		foreach (static::$properties as $key => $type) {
+			if ( ! array_key_exists( $key, $data ) ) {
+				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
+			}
+
+			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
+			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $data[$key], $key));
+		}
+
+		return $instance;
 	}
 
 	/**

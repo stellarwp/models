@@ -4,6 +4,7 @@ namespace StellarWP\Models;
 
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
+use StellarWP\Models\Tests\MockModelWithAfterConstruct;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
 /**
@@ -275,10 +276,8 @@ class TestModel extends ModelsTestCase {
 
 	/**
 	 * @since 1.0.0
-	 *
-	 * @return void
 	 */
-	public function testIsSet() {
+	public function testIsSet(): void {
 		$model = new MockModel();
 
 		// This has a default so we should see as set.
@@ -290,6 +289,59 @@ class TestModel extends ModelsTestCase {
 		// Now we set it, so it should be true - even though we set it to null.
 		$model->lastName = null;
 		$this->assertTrue( $model->isSet( 'lastName' ) );
+	}
+
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldCreateInstanceWithCorrectTypes(): void {
+		$model = MockModel::fromData( [
+			'id' => '1',
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [ 'billMurray@givewp.com' ],
+			'microseconds' => '1234567890.5',
+			'number' => '42',
+			'date' => new \DateTime('2023-01-01'),
+		] );
+
+		$this->assertEquals( 1, $model->id );
+		$this->assertEquals( 'Bill', $model->firstName );
+		$this->assertEquals( 'Murray', $model->lastName );
+		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
+		$this->assertEquals( 1234567890.5, $model->microseconds );
+		$this->assertEquals( 42, $model->number );
+		$this->assertInstanceOf( \DateTime::class, $model->date );
+	}
+
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
+		$this->expectException( Config::getInvalidArgumentException() );
+		$this->expectExceptionMessage( "Unexpected type: 'datetime'. To support additional types, implement a custom castValueForProperty() method." );
+
+		MockModel::fromData( [
+			'id' => 1,
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [],
+			'microseconds' => 123.45,
+			'number' => 123,
+			'date' => '2023-01-01',
+		] );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	public function testOnConstructedIsCalledDuringConstruction() {
+		$model = new MockModelWithAfterConstruct( [ 'id' => 1, 'name' => 'Test' ] );
+
+		$this->assertTrue( $model->afterConstructCalled );
+		$this->assertEquals( [ 'id' => 1, 'name' => 'Test' ], $model->constructedAttributes );
 	}
 
 	/**
