@@ -59,6 +59,18 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$this->fill( array_merge( static::getPropertyDefaults(), $attributes ) );
 
 		$this->syncOriginal();
+
+		$this->afterConstruct();
+	}
+
+	/**
+	 * This method is meant to be overridden by the model to perform actions after the model is constructed.
+	 *
+	 * @since 2.0.0
+	 */
+	protected function afterConstruct() {
+		// This method is meant to be overridden by the model to perform actions after the model is constructed.
+		return;
 	}
 
 	/**

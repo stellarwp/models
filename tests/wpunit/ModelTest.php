@@ -4,6 +4,7 @@ namespace StellarWP\Models;
 
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
+use StellarWP\Models\Tests\MockModelWithAfterConstruct;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
 /**
@@ -329,6 +330,18 @@ class TestModel extends ModelsTestCase {
 			'number' => 123,
 			'date' => '2023-01-01',
 		] );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	public function testOnConstructedIsCalledDuringConstruction() {
+		$model = new MockModelWithAfterConstruct( [ 'id' => 1, 'name' => 'Test' ] );
+
+		$this->assertTrue( $model->afterConstructCalled );
+		$this->assertEquals( [ 'id' => 1, 'name' => 'Test' ], $model->constructedAttributes );
 	}
 
 	/**
