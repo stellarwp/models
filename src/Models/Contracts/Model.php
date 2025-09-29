@@ -79,25 +79,6 @@ interface Model extends ModelBuildsFromData {
 	public static function getPropertyDefinitions() : array;
 
 	/**
-	 * Returns the property definition for the given key.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param string $key Property name.
-	 *
-	 * @return ModelPropertyDefinition
-	 */
-	public static function getPropertyDefinition( string $key ) : ModelPropertyDefinition;
-
-	/**
-	 * Returns the property definitions for the model.
-	 *
-	 * @since 2.0.0
-	 * @return array<string,ModelPropertyDefinition>
-	 */
-	public static function getPropertyDefinitions() : array;
-
-	/**
 	 * Determines if the model has the given property.
 	 *
 	 * @since 2.0.0 changed to static
