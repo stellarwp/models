@@ -8,6 +8,7 @@ A library for a simple model structure.
 * [Configuration](#configuration)
 * [Creating a model](#creating-a-model)
 * [Interacting with a model](#interacting-with-a-model)
+* [Attribute validation](#attribute-validation)
 * [Data transfer objects](#data-transfer-objects)
 * [Classes of note](#classes-of-note)
   * [Model](#model)
@@ -57,7 +58,9 @@ Models are classes that hold data and provide some helper methods for interactin
 
 ### A simple model
 
-This is an example of a model that just holds properties.
+This is an example of a model that just holds properties. Properties can be defined in two ways:
+
+#### Using the shorthand syntax:
 
 ```php
 namespace Boomshakalaka\Whatever;
@@ -70,11 +73,40 @@ class Breakfast_Model extends Model {
 	 */
 	protected static $properties = [
 		'id'        => 'int',
-		'name'      => 'string',
+		'name'      => ['string', 'Default Name'], // With default value
 		'price'     => 'float',
 		'num_eggs'  => 'int',
 		'has_bacon' => 'bool',
 	];
+}
+```
+
+#### Using property definitions for more control:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelPropertyDefinition;
+
+class Breakfast_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static function properties(): array {
+		return [
+			'id' => ModelPropertyDefinition::create()
+				->type('int')
+				->required(),
+			'name' => ModelPropertyDefinition::create()
+				->type('string')
+				->default('Default Name')
+				->nullable(),
+			'price' => ModelPropertyDefinition::create()
+				->type('float')
+				->requiredOnSave(),
+		];
+	}
 }
 ```
 
@@ -179,6 +211,115 @@ class Breakfast_Model extends Model implements Contracts\ModelCrud {
 	 */
 	public static function query() : ModelQueryBuilder {
 		return App::get( Repository::class )->prepareQuery();
+	}
+}
+```
+
+## Interacting with a model
+
+### Change tracking
+
+Models track changes to their properties and provide methods to manage those changes:
+
+```php
+$breakfast = new Breakfast_Model([
+	'name' => 'Original Name',
+	'price' => 5.99,
+]);
+
+// Check if a property is dirty (changed)
+$breakfast->setAttribute('name', 'New Name');
+if ($breakfast->isDirty('name')) {
+	echo 'Name has changed!';
+}
+
+// Get all dirty values
+$dirtyValues = $breakfast->getDirty(); // ['name' => 'New Name']
+
+// Commit changes (makes current values the "original")
+$breakfast->commitChanges();
+// or use the alias:
+$breakfast->syncOriginal();
+
+// Revert a specific property change
+$breakfast->setAttribute('price', 7.99);
+$breakfast->revertChange('price'); // price is back to 5.99
+
+// Revert all changes
+$breakfast->setAttribute('name', 'Another Name');
+$breakfast->setAttribute('price', 8.99);
+$breakfast->revertChanges(); // All properties back to original
+
+// Get original value
+$originalName = $breakfast->getOriginal('name');
+$allOriginal = $breakfast->getOriginal(); // Get all original values
+```
+
+### Checking if properties are set
+
+The `isSet()` method checks if a property has been set. This is different from PHP's `isset()` because it considers `null` values and default values as "set":
+
+```php
+$breakfast = new Breakfast_Model();
+
+// Properties with defaults are considered set
+if ($breakfast->isSet('name')) { // true if 'name' has a default value
+    echo 'Name is set';
+}
+
+// Properties without defaults are not set until assigned
+if (!$breakfast->isSet('price')) { // false - no default and not assigned
+    echo 'Price is not set';
+}
+
+// Setting a property to null still counts as set
+$breakfast->setAttribute('price', null);
+if ($breakfast->isSet('price')) { // true - explicitly set to null
+    echo 'Price is set (even though it\'s null)';
+}
+
+// PHP's isset() behaves differently with null
+if (!isset($breakfast->price)) { // false - isset() returns false for null
+    echo 'PHP isset() returns false for null values';
+}
+```
+
+**Key differences from PHP's `isset()`:**
+- `isSet()` returns `true` for properties with default values
+- `isSet()` returns `true` for properties explicitly set to `null`
+- `isSet()` returns `false` only for properties that have no default and haven't been assigned
+
+### Creating models from query data
+
+Models can be created from database query results using the `fromData()` method:
+
+```php
+// From an object or array
+$data = DB::get_row("SELECT * FROM breakfasts WHERE id = 1");
+$breakfast = Breakfast_Model::fromData($data);
+
+// With different build modes
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_STRICT);
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_IGNORE_MISSING);
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_IGNORE_EXTRA);
+```
+
+Build modes:
+- `BUILD_MODE_STRICT`: Throws exceptions for missing or extra properties
+- `BUILD_MODE_IGNORE_MISSING`: Ignores properties missing from the data
+- `BUILD_MODE_IGNORE_EXTRA`: Ignores extra properties in the data (default)
+
+### Extending model construction
+
+Models can perform custom initialization after construction by overriding the `afterConstruct()` method:
+
+```php
+class Breakfast_Model extends Model {
+	protected function afterConstruct() {
+		// Perform custom initialization
+		if ($this->has_bacon && $this->num_eggs > 2) {
+			$this->setAttribute('name', $this->name . ' (Hearty!)');
+		}
 	}
 }
 ```
@@ -442,6 +583,13 @@ $breakfast = Breakfast_Model::find( 1 );
 $breakfast->delete();
 ```
 
+### Unsetting properties
+
+```php
+$breakfast = Breakfast_Model::find( 1 );
+unset($breakfast->price); // Unsets the price property
+```
+
 ## Classes of note
 
 ### `Model`
@@ -455,7 +603,7 @@ This is an abstract class to extend for creating model factories.
 ### `ModelQueryBuilder`
 
 This class extends the [`stellarwp/db`](https://github.com/stellarwp/db) `QueryBuilder` class so that it returns
-model instances rather than arrays or `stdClass` instances. Using this requires models that implement the `ModelFromQueryBuilderObject`
+model instances rather than arrays or `stdClass` instances. Using this requires models that implement the `ModelBuildsFromData`
 interface.
 
 ### `DataTransferObject`
