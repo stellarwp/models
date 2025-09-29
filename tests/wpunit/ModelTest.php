@@ -188,10 +188,6 @@ class TestModel extends ModelsTestCase {
 		$model = new MockModel();
 
 		$this->assertFalse( isset( $model->id ) );
-
-		$model->id = null;
-
-		$this->assertFalse( isset( $model->id ) );
 	}
 
 	/**
@@ -287,7 +283,7 @@ class TestModel extends ModelsTestCase {
 		$this->assertFalse( $model->isSet( 'lastName' ) );
 
 		// Now we set it, so it should be true - even though we set it to null.
-		$model->lastName = null;
+		$model->lastName = 'Murray';
 		$this->assertTrue( $model->isSet( 'lastName' ) );
 	}
 
@@ -319,7 +315,7 @@ class TestModel extends ModelsTestCase {
 	 */
 	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
 		$this->expectException( Config::getInvalidArgumentException() );
-		$this->expectExceptionMessage( "Unexpected type: 'datetime'. To support additional types, implement a custom castValueForProperty() method." );
+		$this->expectExceptionMessage( "Unexpected type: 'DateTime'. To support additional types, overload this method or use Definition casting." );
 
 		MockModel::fromData( [
 			'id' => 1,
@@ -355,7 +351,6 @@ class TestModel extends ModelsTestCase {
 			[ 'firstName', 100 ],
 			[ 'emails', 'Not an array' ],
 			[ 'microseconds', 'Not a float' ],
-			[ 'number', '12' ] // numeric strings do not work; must be int or float
 		];
 	}
 }

@@ -298,11 +298,7 @@ class ModelFactoryTest extends ModelsTestCase
 		$factory = new class(MockModelWithInvokableProperty::class) extends ModelFactory {
 			public function definition(): array {
 				return [
-					'invokable' => new class extends MockInvokableClass {
-						public function __invoke() {
-							throw new \Exception('Invokable classes should not be resolved by factories.');
-						}
-					},
+					'invokable' => new MockInvokableClass(),
 				];
 			}
 		};
@@ -353,9 +349,11 @@ class MockModelWithDependency extends MockModel
 /**
  * @since 1.2.3
  */
-abstract class MockInvokableClass
+class MockInvokableClass
 {
-	abstract public function __invoke();
+	public function __invoke() {
+		throw new \Exception('Invokable classes should not be resolved by factories.');
+	}
 }
 
 /**

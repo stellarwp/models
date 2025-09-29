@@ -14,18 +14,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public const BUILD_MODE_IGNORE_EXTRA = 2;
 
 	/**
-	 * The model's attributes.
+	 * The model's properties.
 	 *
-	 * @var array<string,mixed>
+	 * @var ModelPropertyCollection
 	 */
-	protected $attributes = [];
-
-	/**
-	 * The model attribute's original state.
-	 *
-	 * @var array<string,mixed>
-	 */
-	protected $original = [];
+	protected ModelPropertyCollection $propertyCollection;
 
 	/**
 	 * The model properties assigned to their types.
@@ -56,10 +49,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	final public function __construct( array $attributes = [] ) {
-		$this->fill( array_merge( static::getPropertyDefaults(), $attributes ) );
-
-		$this->syncOriginal();
-
+		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( static::getPropertyDefinitions(), $attributes );
 		$this->afterConstruct();
 	}
 
@@ -72,7 +62,6 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		// This method is meant to be overridden by the model to perform actions after the model is constructed.
 		return;
 	}
-
 	/**
 	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
 	 * additional types, especially class types, this method can be overridden.
@@ -85,12 +74,21 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return mixed
 	 */
-	protected static function castValueForProperty( string $type, $value, string $property ) {
-		if ( static::isPropertyTypeValid( $property, $value ) || $value === null ) {
+	protected static function castValueForProperty( ModelPropertyDefinition $definition, $value, string $property ) {
+		if ( $definition->isValidValue( $value ) || $value === null ) {
 			return $value;
 		}
 
-		switch ( $type ) {
+		if ( $definition->canCast() ) {
+			return $definition->cast( $value );
+		}
+
+		$type = $definition->getType();
+		if ( count( $type ) !== 1 ) {
+			throw new \InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
+		}
+
+		switch ( $type[0] ) {
 			case 'int':
 				return (int) $value;
 			case 'string':
@@ -102,8 +100,46 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			case 'float':
 				return (float) filter_var( $value, FILTER_SANITIZE_NUMBER_FLOAT,FILTER_FLAG_ALLOW_FRACTION );
 			default:
-				Config::throwInvalidArgumentException( "Unexpected type: '$type'. To support additional types, implement a custom castValueForProperty() method." );
+				Config::throwInvalidArgumentException( "Unexpected type: '{$type[0]}'. To support additional types, overload this method or use Definition casting." );
 		}
+	}
+
+	/**
+	 * Commit the changes to the properties.
+	 *
+	 * @since 2.0.0
+	 */
+	public function commitChanges(): void {
+		$this->propertyCollection->commitChangedProperties();
+	}
+
+	/**
+	 * Revert the changes to a specific property.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key Property name.
+	 */
+	public function revertChange( string $key ): void {
+		$this->propertyCollection->getOrFail( $key )->revertChanges();
+	}
+
+	/**
+	 * Discard the changes to the properties.
+	 *
+	 * @since 2.0.0
+	 */
+	public function revertChanges(): void {
+		$this->propertyCollection->revertChangedProperties();
+	}
+
+	/**
+	 * A more robust, alternative way to define properties for the model than static::$properties.
+	 *
+	 * @return array<string,ModelPropertyDefinition|array<string,mixed>>
+	 */
+	protected static function properties(): array {
+		return [];
 	}
 
 	/**
@@ -116,9 +152,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return ModelInterface
 	 */
 	public function fill( array $attributes ) : ModelInterface {
-		foreach ( $attributes as $key => $value ) {
-			$this->setAttribute( $key, $value );
-		}
+		$this->propertyCollection->setValues( $attributes );
 
 		return $this;
 	}
@@ -132,13 +166,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @param mixed  $default Default value. Default is null.
 	 *
 	 * @return mixed
-	 *
-	 * @throws RuntimeException
 	 */
 	public function getAttribute( string $key, $default = null ) {
-		static::validatePropertyExists( $key );
+		$property = $this->propertyCollection->getOrFail( $key );
 
-		return $this->attributes[ $key ] ?? $default;
+		return $property->isSet() ? $property->getValue() : $default;
 	}
 
 	/**
@@ -149,15 +181,48 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,mixed>
 	 */
 	public function getDirty() : array {
-		$dirty = [];
+		return $this->propertyCollection->getDirtyValues();
+	}
 
-		foreach ( $this->attributes as $key => $value ) {
-			if ( ! array_key_exists( $key, $this->original ) || $value !== $this->original[ $key ] ) {
-				$dirty[ $key ] = $value;
-			}
+	public static function getPropertyDefinition( string $key ): ModelPropertyDefinition {
+		$definitions = static::getPropertyDefinitions();
+
+		if ( ! isset( $definitions[ $key ] ) ) {
+			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
-		return $dirty;
+		return $definitions[ $key ];
+	}
+
+	/**
+	 * Returns the parsed property definitions for the model.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array<string,ModelPropertyDefinition>
+	 */
+	public static function getPropertyDefinitions(): array {
+		static $definition = null;
+
+		if ( $definition === null ) {
+			$definitions = array_merge( static::$properties, static::properties() );
+
+			foreach ( $definitions as $key => $definition ) {
+				if ( ! is_string( $key ) ) {
+					throw new \InvalidArgumentException( 'Property key must be a string.' );
+				}
+
+				if ( ! $definition instanceof ModelPropertyDefinition ) {
+					$definition = ModelPropertyDefinition::fromShorthand( $definition );
+				}
+
+				$definitions[ $key ] = $definition->lock();
+			}
+
+			$definition = $definitions;
+		}
+
+		return $definition;
 	}
 
 	/**
@@ -170,7 +235,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return mixed|array
 	 */
 	public function getOriginal( ?string $key = null ) {
-		return $key ? $this->original[ $key ] : $this->original;
+		return $key ? $this->propertyCollection->getOrFail( $key )->getOriginalValue() : $this->propertyCollection->getOriginalValues();
 	}
 
 	/**
@@ -182,73 +247,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return boolean
 	 */
 	public function isSet( string $key ): bool {
-		return array_key_exists( $key, $this->attributes ) || static::hasDefault( $key );
-	}
-
-	/**
-	 * Check if there is a default value for a property.
-	 *
-	 * @since 2.0.0 changed to static
-	 * @since 1.2.2
-	 *
-	 * @param string $key Property name.
-	 *
-	 * @return bool
-	 */
-	protected static function hasDefault( string $key ): bool {
-		return is_array( static::$properties[ $key ] ) && array_key_exists( 1, static::$properties[ $key ] );
-	}
-
-	/**
-	 * Returns the default value for a property if one is provided, otherwise null.
-	 *
-	 * @since 2.0.0 changed to static
-	 * @since 1.0.0
-	 *
-	 * @param string $key Property name.
-	 *
-	 * @return mixed|null
-	 */
-	protected static function getPropertyDefault( string $key ) {
-		if ( static::hasDefault( $key ) ) {
-			return static::$properties[ $key ][1];
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns the defaults for all the properties. If a default is omitted it defaults to null.
-	 *
-	 * @since 2.0.0 changed to static
-	 * @since 1.0.0
-	 *
-	 * @return array<string,mixed>
-	 */
-	protected static function getPropertyDefaults() : array {
-		$defaults = [];
-		foreach ( array_keys( static::$properties ) as $property ) {
-			if ( static::hasDefault( $property ) ) {
-				$defaults[ $property ] = static::getPropertyDefault( $property );
-			}
-		}
-
-		return $defaults;
-	}
-
-	/**
-	 * Get the property type
-	 *
-	 * @since 1.0.0
-	 *
-	 * @param string $key Property name.
-	 *
-	 * @return string
-	 */
-	protected function getPropertyType( string $key ) : string {
-		$type = is_array( static::$properties[ $key ] ) ? static::$properties[ $key ][0] : static::$properties[ $key ];
-
-		return strtolower( trim( $type ) );
+		return $this->propertyCollection->isSet( $key );
 	}
 
 	/**
@@ -295,7 +294,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	protected function hasAttribute( string $key ) : bool {
-		return array_key_exists( $key, $this->attributes );
+		return $this->propertyCollection->has( $key );
 	}
 
 	/**
@@ -322,7 +321,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	public static function hasProperty( string $key ) : bool {
-		return array_key_exists( $key, static::$properties );
+		return isset( static::getPropertyDefinitions()[ $key ] );
 	}
 
 	/**
@@ -349,10 +348,10 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 */
 	public function isDirty( ?string $attribute = null ) : bool {
 		if ( ! $attribute ) {
-			return (bool) $this->getDirty();
+			return $this->propertyCollection->isDirty();
 		}
 
-		return array_key_exists( $attribute, $this->getDirty() );
+		return $this->propertyCollection->getOrFail( $attribute )->isDirty();
 	}
 
 	/**
@@ -367,28 +366,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	public static function isPropertyTypeValid( string $key, $value ) : bool {
-		if ( is_null( $value ) ) {
-			return true;
-		}
-
-		$type = static::getPropertyType( $key );
-
-		switch ( $type ) {
-			case 'int':
-				return is_int( $value );
-			case 'string':
-				return is_string( $value );
-			case 'bool':
-				return is_bool( $value );
-			case 'array':
-				return is_array( $value );
-			case 'float':
-				return is_float( $value );
-			case 'number':
-				return is_int( $value ) || is_float( $value );
-			default:
-				return $value instanceof $type;
-		}
+		return static::getPropertyDefinition( $key )->isValidValue( $value );
 	}
 
 	/**
@@ -432,18 +410,22 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			}
 		}
 
-		$instance = new static();
+		$initialValues = [];
 
 		foreach (static::$properties as $key => $type) {
 			if ( ! array_key_exists( $key, $data ) ) {
+				// Skip missing properties when BUILD_MODE_IGNORE_MISSING is set
+				if ( $mode & self::BUILD_MODE_IGNORE_MISSING ) {
+					continue;
+				}
 				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
 			}
 
 			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
-			$instance->setAttribute($key, static::castValueForProperty(static::getPropertyType($key), $data[$key], $key));
+			$initialValues[ $key ] = static::castValueForProperty( static::getPropertyDefinition( $key ), $data[ $key ], $key );
 		}
 
-		return $instance;
+		return new static( $initialValues );
 	}
 
 	/**
@@ -468,15 +450,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return ModelInterface
 	 */
 	public function setAttribute( string $key, $value ) : ModelInterface {
-		$this->validatePropertyExists( $key );
-		$this->validatePropertyType( $key, $value );
-
-		$validation_method = 'validate_' . $key;
-		if ( method_exists( $this, $validation_method ) ) {
-			$this->$validation_method( $value );
-		}
-
-		$this->attributes[ $key ] = $value;
+		$this->propertyCollection->getOrFail( $key )->setValue( $value );
 
 		return $this;
 	}
@@ -501,12 +475,14 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Syncs the original attributes with the current.
 	 *
+	 * This is considered an alias of `commitChanges()` and is here for backwards compatibility.
+	 *
 	 * @since 1.0.0
 	 *
 	 * @return ModelInterface
 	 */
 	public function syncOriginal() : ModelInterface {
-		$this->original = $this->attributes;
+		$this->commitChanges();
 
 		return $this;
 	}
@@ -519,44 +495,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,mixed>
 	 */
 	public function toArray() : array {
-		return $this->attributes;
-	}
-
-	/**
-	 * Validates that the given property exists
-	 *
-	 * @since 2.0.0 changed to static
-	 * @since 1.0.0
-	 *
-	 * @param string $key Property name.
-	 *
-	 * @return void
-	 */
-	protected static function validatePropertyExists( string $key ) {
-		if ( ! static::hasProperty( $key ) ) {
-			$exception = Config::getInvalidArgumentException();
-			throw new $exception( "Invalid property. '$key' does not exist." );
-		}
-	}
-
-	/**
-	 * Validates that the given value is a valid type for the given property.
-	 *
-	 * @since 2.0.0 changed to static
-	 * @since 1.0.0
-	 *
-	 * @param string $key   Property name.
-	 * @param mixed  $value Property value.
-	 *
-	 * @return void
-	 */
-	protected static function validatePropertyType( string $key, $value ) {
-		if ( ! static::isPropertyTypeValid( $key, $value ) ) {
-			$type = static::getPropertyType( $key );
-
-			$exception = Config::getInvalidArgumentException();
-			throw new $exception( "Invalid attribute assignment. '$key' should be of type: '$type'" );
-		}
+		return $this->propertyCollection->getValues();
 	}
 
 	/**
@@ -586,7 +525,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	public function __isset( string $key ) {
-		return isset( $this->attributes[ $key ] );
+		return $this->propertyCollection->isSet( $key );
 	}
 
 	/**
@@ -601,5 +540,14 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 */
 	public function __set( string $key, $value ) {
 		$this->setAttribute( $key, $value );
+	}
+
+	/**
+	 * Unset a property.
+	 *
+	 * @since 2.0.0
+	 */
+	public function __unset( string $key ) {
+		$this->propertyCollection->unsetProperty( $key );
 	}
 }

@@ -3,3 +3,4 @@ files/
 repo/
 vendor/
 .idea
+.vscode
