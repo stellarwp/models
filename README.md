@@ -58,7 +58,7 @@ Models are classes that hold data and provide some helper methods for interactin
 
 ### A simple model
 
-This is an example of a model that just holds properties. Properties can be defined in two ways:
+This is an example of a model that just holds properties. Properties can be defined in one or both of the following ways:
 
 #### Using the shorthand syntax:
 
