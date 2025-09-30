@@ -321,4 +321,24 @@ class ModelPropertyTest extends ModelsTestCase {
 
 		$property->unset();
 	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::setValue
+	 */
+	public function testReadonlyExceptionContainsProperty() {
+		$definition = new ModelPropertyDefinition();
+		$definition->type('string')->readonly();
+
+		$property = new ModelProperty('id', $definition, 'initial-value');
+
+		try {
+			$property->setValue('new-value');
+			$this->fail('Expected ReadOnlyPropertyException to be thrown');
+		} catch (ReadOnlyPropertyException $e) {
+			$this->assertInstanceOf(ModelProperty::class, $e->getProperty());
+			$this->assertSame('id', $e->getProperty()->getKey());
+		}
+	}
 }

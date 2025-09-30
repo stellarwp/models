@@ -18,7 +18,7 @@ class Config {
 	protected static $invalidArgumentException = InvalidArgumentException::class;
 
 	/**
-	 * @var class-string<Throwable>
+	 * @var class-string<ReadOnlyPropertyException>
 	 */
 	protected static $readOnlyPropertyException = ReadOnlyPropertyException::class;
 
@@ -58,7 +58,7 @@ class Config {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @return class-string<Throwable>
+	 * @return class-string<ReadOnlyPropertyException>
 	 */
 	public static function getReadOnlyPropertyException(): string {
 		return static::$readOnlyPropertyException;
@@ -160,13 +160,14 @@ class Config {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param string $message
+	 * @param ModelProperty $property
+	 * @param string        $message
 	 *
 	 * @return never
-	 * @throws Throwable
+	 * @throws ReadOnlyPropertyException
 	 */
-	public static function throwReadOnlyPropertyException( string $message ): void {
+	public static function throwReadOnlyPropertyException( ModelProperty $property, string $message ): void {
 		$exceptionClass = static::$readOnlyPropertyException;
-		throw new $exceptionClass( $message );
+		throw new $exceptionClass( $property, $message );
 	}
 }
