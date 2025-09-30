@@ -318,7 +318,7 @@ class MockModel extends Model
 {
 	protected static $autoIncrementId = 1;
 
-	protected static $properties = [
+	protected static array $properties = [
 		'id' => 'int',
 	];
 
@@ -340,7 +340,7 @@ class MockModel extends Model
  */
 class MockModelWithDependency extends MockModel
 {
-	protected static $properties = [
+	protected static array $properties = [
 		'id' => 'int',
 		'nestedId' => 'int',
 	];
@@ -363,7 +363,7 @@ class MockInvokableClass
  */
 class MockModelWithInvokableProperty extends MockModel
 {
-	protected static $properties = [
+	protected static array $properties = [
 		'invokable' => MockInvokableClass::class,
 	];
 }
