@@ -20,6 +20,16 @@ class ModelProperty {
 	private bool $isDirty = false;
 
 	/**
+	 * Whether the original value has been set.
+	 */
+	private bool $isOriginalValueSet = false;
+
+	/**
+	 * Whether the value has been set.
+	 */
+	private bool $isValueSet = false;
+
+	/**
 	 * The key of the property.
 	 */
 	private string $key;
@@ -58,6 +68,8 @@ class ModelProperty {
 
 			$this->value = $initialValue;
 			$this->originalValue = $this->value;
+			$this->isValueSet = true;
+			$this->isOriginalValueSet = true;
 		}
 	}
 
@@ -98,7 +110,7 @@ class ModelProperty {
 	 * @return mixed
 	 */
 	public function getValue() {
-		return $this->value ?? null;
+		return $this->isValueSet ? $this->value : null;
 	}
 
 	/**
@@ -125,7 +137,7 @@ class ModelProperty {
 	 * @since 2.0.0
 	 */
 	public function isSet(): bool {
-		return isset( $this->value );
+		return $this->isValueSet;
 	}
 
 	/**
@@ -134,10 +146,11 @@ class ModelProperty {
 	 * @since 2.0.0
 	 */
 	public function revertChanges(): void {
-		if ( isset( $this->originalValue ) ) {
+		if ( $this->isOriginalValueSet ) {
 			$this->value = $this->originalValue;
+			$this->isValueSet = true;
 		} else {
-			unset( $this->value );
+			$this->isValueSet = false;
 		}
 
 		$this->isDirty = false;
@@ -150,6 +163,7 @@ class ModelProperty {
 	 */
 	public function commitChanges(): void {
 		$this->originalValue = $this->value;
+		$this->isOriginalValueSet = $this->isValueSet;
 		$this->isDirty = false;
 	}
 
@@ -166,7 +180,8 @@ class ModelProperty {
 		}
 
 		$this->value = $value;
-		$this->isDirty = $value !== $this->originalValue;
+		$this->isValueSet = true;
+		$this->isDirty = ! $this->isOriginalValueSet || $value !== $this->originalValue;
 
 		return $this;
 	}
@@ -177,12 +192,10 @@ class ModelProperty {
 	 * @since 2.0.0
 	 */
 	public function unset(): void {
-		// Only attempt to unset if the property is already set
-		if (isset($this->value)) {
-			unset( $this->value );
-		}
+		// Mark the value as unset
+		$this->isValueSet = false;
 
 		// If the orginal value had a value we have now deviated
-		$this->isDirty = isset( $this->originalValue );
+		$this->isDirty = $this->isOriginalValueSet;
 	}
 }
