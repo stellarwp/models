@@ -12,13 +12,11 @@ A library for a simple model structure.
 * [Data transfer objects](#data-transfer-objects)
 * [Classes of note](#classes-of-note)
   * [Model](#model)
-  * [ModelFactory](#modelfactory)
   * [ModelQueryBuilder](#modelquerybuilder)
   * [DataTransferObject](#data-transfer-objects)
   * [Repositories\Repository](#repositoriesrepository)
 * [Contracts of note](#contracts-of-note)
   * [Contracts\ModelCrud](#contractsmodelcrud)
-  * [Contracts\ModelHasFactory](#contractsmodelhasfactory)
   * [Contracts\ModelReadOnly](#contractsmodelreadonly)
   * [Repositories\Contracts\Deletable](#repositoriescontractsdeletable)
   * [Repositories\Contracts\Insertable](#repositoriescontractsinsertable)
@@ -596,10 +594,6 @@ unset($breakfast->price); // Unsets the price property
 
 This is an abstract class to extend for your models.
 
-### `ModelFactory`
-
-This is an abstract class to extend for creating model factories.
-
 ### `ModelQueryBuilder`
 
 This class extends the [`stellarwp/db`](https://github.com/stellarwp/db) `QueryBuilder` class so that it returns
@@ -619,10 +613,6 @@ This is an abstract class to extend for your repositories.
 ### `Contracts\ModelCrud`
 
 Provides definitions of methods for CRUD operations in a model.
-
-### `Contracts\ModelHasFactory`
-
-Provides definition for factory methods within a model.
 
 ### `Contracts\ModelReadOnly`
 
