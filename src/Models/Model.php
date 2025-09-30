@@ -25,21 +25,21 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @var array<string,string|array{0:string,1:mixed}>
 	 */
-	protected static $properties = [];
+	protected static array $properties = [];
 
 	/**
 	 * The model relationships assigned to their relationship types.
 	 *
 	 * @var array<string,string>
 	 */
-	protected static $relationships = [];
+	protected static array $relationships = [];
 
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
 	 *
 	 * @var array<string,Model|list<Model>|null>
 	 */
-	private $cachedRelations = [];
+	private array $cachedRelations = [];
 
 	/**
 	 * Constructor.
