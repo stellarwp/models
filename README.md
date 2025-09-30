@@ -94,7 +94,7 @@ class Breakfast_Model extends Model {
 		return [
 			'id' => ModelPropertyDefinition::create()
 				->type('int')
-				->required(),
+				->required()
 			'name' => ModelPropertyDefinition::create()
 				->type('string')
 				->default('Default Name')
@@ -106,6 +106,16 @@ class Breakfast_Model extends Model {
 	}
 }
 ```
+
+#### Property definition options:
+
+- `type(string ...$types)` - Set one or more types (int, string, bool, float, array, or class names)
+- `default($value)` - Set a default value (can be a closure)
+- `nullable()` - Allow null values
+- `required()` - Property must be provided during construction
+- `requiredOnSave()` - Property must be set before saving
+- `readonly()` - Property can only be set during construction, cannot be modified afterward
+- `castWith(callable $callback)` - Custom casting function for the property value
 
 ### A persistable model
 
@@ -264,6 +274,44 @@ Build modes:
 - `BUILD_MODE_STRICT`: Throws exceptions for missing or extra properties
 - `BUILD_MODE_IGNORE_MISSING`: Ignores properties missing from the data
 - `BUILD_MODE_IGNORE_EXTRA`: Ignores extra properties in the data (default)
+
+### Readonly properties
+
+Properties marked as `readonly()` can only be set during construction and cannot be modified afterward:
+
+```php
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelPropertyDefinition;
+
+class User_Model extends Model {
+	protected static function properties(): array {
+		return [
+			'id' => ModelPropertyDefinition::create()
+				->type('int')
+				->readonly(), // Can only be set during construction
+			'email' => ModelPropertyDefinition::create()
+				->type('string'),
+		];
+	}
+}
+
+// Set readonly property during construction
+$user = new User_Model(['id' => 1, 'email' => 'user@example.com']);
+
+// This works fine
+$user->setAttribute('email', 'newemail@example.com');
+
+// This throws ReadOnlyPropertyException
+$user->setAttribute('id', 2); // Error: Cannot modify readonly property "id"
+
+// This also throws ReadOnlyPropertyException
+unset($user->id); // Error: Cannot unset readonly property "id"
+```
+
+Readonly properties are useful for:
+- Primary keys that shouldn't change after creation
+- Timestamps that are set once
+- Any immutable identifiers or values
 
 ### Extending model construction
 

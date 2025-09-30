@@ -173,10 +173,17 @@ class ModelProperty {
 	 * @since 2.0.0
 	 *
 	 * @param mixed $value
+	 *
+	 * @throws InvalidArgumentException When the value is invalid.
+	 * @throws \Throwable When attempting to modify a readonly property.
 	 */
 	public function setValue( $value ): self {
+		if ( $this->definition->isReadonly() ) {
+			Config::throwReadOnlyPropertyException( sprintf( 'Cannot modify readonly property "%s".', $this->key ) );
+		}
+
 		if ( ! $this->definition->isValidValue( $value ) ) {
-			throw new \InvalidArgumentException( 'Value is not valid for the property.' );
+			throw new InvalidArgumentException( 'Value is not valid for the property.' );
 		}
 
 		$this->value = $value;
@@ -190,8 +197,14 @@ class ModelProperty {
 	 * Unsets the value of the property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @throws \Throwable When attempting to unset a readonly property.
 	 */
 	public function unset(): void {
+		if ( $this->definition->isReadonly() ) {
+			Config::throwReadOnlyPropertyException( sprintf( 'Cannot unset readonly property "%s".', $this->key ) );
+		}
+
 		// Mark the value as unset
 		$this->isValueSet = false;
 
