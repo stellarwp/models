@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace StellarWP\Models;
 
 use Closure;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * Defines a model property with its type, default value, and validation rules.
@@ -26,7 +28,7 @@ class ModelPropertyDefinition {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @var Closure|null A closure that accepts the value and property instance as parameters and returns the cast value.
+	 * @var Closure A closure that accepts the value and property instance as parameters and returns the cast value.
 	 */
 	private Closure $castMethod;
 
@@ -108,13 +110,13 @@ class ModelPropertyDefinition {
 	 *
 	 * @return mixed
 	 *
-	 * @throws \RuntimeException When no cast method is set.
+	 * @throws RuntimeException When no cast method is set.
 	 */
 	public function cast( $value ) {
 		$this->checkLock();
 
 		if ( ! $this->canCast() ) {
-			throw new \RuntimeException( 'No cast method set' );
+			throw new RuntimeException( 'No cast method set' );
 		}
 
 		$castMethod = $this->castMethod;
@@ -140,11 +142,11 @@ class ModelPropertyDefinition {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @throws \RuntimeException When the property is locked.
+	 * @throws RuntimeException When the property is locked.
 	 */
 	private function checkLock(): void {
 		if ( $this->locked ) {
-			throw new \RuntimeException( 'Property is locked' );
+			throw new RuntimeException( 'Property is locked' );
 		}
 	}
 
@@ -155,7 +157,7 @@ class ModelPropertyDefinition {
 	 *
 	 * @param string|array{0:string,1:mixed} $definition The shorthand definition.
 	 *
-	 * @throws \InvalidArgumentException When the definition is invalid.
+	 * @throws InvalidArgumentException When the definition is invalid.
 	 */
 	public static function fromShorthand( $definition ): self {
 		$property = new self();
@@ -166,7 +168,7 @@ class ModelPropertyDefinition {
 			$property->type( $definition[0] );
 			$property->default( $definition[1] );
 		} else {
-			throw new \InvalidArgumentException( 'Invalid shorthand property definition' );
+			throw new InvalidArgumentException( 'Invalid shorthand property definition' );
 		}
 
 		// Nullable for backwards compatibility
@@ -272,6 +274,7 @@ class ModelPropertyDefinition {
 			case 'double':
 				return $this->supportsType( 'float' );
 			case 'object':
+				/** @var object $value */
 				if ( $this->supportsType( 'object' ) ) {
 					return true;
 				} else {

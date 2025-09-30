@@ -4,13 +4,19 @@ declare(strict_types=1);
 
 namespace StellarWP\Models;
 
+use Countable;
+use InvalidArgumentException;
+use IteratorAggregate;
+
 /**
  * A collection of properties for a model.
  *
  * Some philosophical notes:
  * 		* The collection is immutable. Once created, the collection cannot be changed.
+ *
+ * @implements IteratorAggregate<string,ModelProperty>
  */
-class ModelPropertyCollection implements \Countable, \IteratorAggregate {
+class ModelPropertyCollection implements Countable, IteratorAggregate {
 	/**
 	 * The properties.
 	 *
@@ -27,11 +33,11 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	public function __construct( array $properties = [] ) {
 		foreach ( $properties as $key => $property ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $property instanceof ModelProperty ) {
-				throw new \InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
+				throw new InvalidArgumentException( 'Property must be an instance of ModelProperty.' );
 			}
 
 			$this->properties[$key] = $property;
@@ -61,7 +67,8 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param $mode The mode as used in array_filter() which determines the arguments passed to the callback.
+	 * @param callable $callback
+	 * @param int $mode The mode as used in array_filter() which determines the arguments passed to the callback.
 	 */
 	public function filter( callable $callback, $mode = 0 ): ModelPropertyCollection {
 		return new self( array_filter( $this->properties, $callback, $mode ) );
@@ -73,6 +80,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * @since 2.0.0
 	 *
 	 * @param array<string,ModelPropertyDefinition> $propertyDefinitions
+	 * @param array<string,mixed> $initialValues
 	 * @return ModelPropertyCollection
 	 */
 	public static function fromPropertyDefinitions( array $propertyDefinitions, array $initialValues = [] ): ModelPropertyCollection {
@@ -80,11 +88,11 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 
 		foreach ( $propertyDefinitions as $key => $definition ) {
 			if ( ! is_string( $key ) ) {
-				throw new \InvalidArgumentException( 'Property key must be a string.' );
+				throw new InvalidArgumentException( 'Property key must be a string.' );
 			}
 
 			if ( ! $definition instanceof ModelPropertyDefinition ) {
-				throw new \InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
+				throw new InvalidArgumentException( 'Property definition must be an instance of ModelPropertyDefinition.' );
 			}
 
 			if ( isset( $initialValues[$key] ) ) {
@@ -128,6 +136,8 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Get the dirty values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function getDirtyValues(): array {
 		return $this->getDirtyProperties()->map( fn( ModelProperty $property ) => $property->getValue() );
@@ -140,7 +150,7 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 */
 	public function getOrFail( string $key ): ModelProperty {
 		if ( ! $this->has( $key ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $this->properties[$key];
@@ -179,6 +189,8 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Get the values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return array<string,mixed>
 	 */
 	public function getValues(): array {
 		return $this->map( fn( ModelProperty $property ) => $property->getValue() );
@@ -224,20 +236,32 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Map the properties. This does not use array_map because we want to preserve the keys.
 	 *
 	 * @since 2.0.0
-	 * @return array<string,mixed>
+	 *
+	 * @template TMapValue
+	 * @param callable(ModelProperty):TMapValue $callback
+	 * @return array<string,TMapValue>
 	 */
 	public function map( callable $callback ) {
-		return $this->reduce( static function( $carry, ModelProperty $property ) use ( $callback ) {
+		$reducer = static function( array $carry, ModelProperty $property ) use ( $callback ): array {
 			$carry[ $property->getKey() ] = $callback( $property );
 
 			return $carry;
-		}, [] );
+		};
+
+		/** @var array<string,TMapValue> */
+		return $this->reduce( $reducer, [] );
 	}
 
 	/**
 	 * Reduce the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @template TReduceInitial
+	 * @template TReduceResult
+	 * @param callable(TReduceInitial|TReduceResult,ModelProperty):(TReduceInitial|TReduceResult) $callback
+	 * @param TReduceInitial $initial
+	 * @return TReduceResult|TReduceInitial
 	 */
 	public function reduce( callable $callback, $initial = null ) {
 		return array_reduce( $this->properties, $callback, $initial );
@@ -265,17 +289,26 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Set the values of the properties.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @param array<string,mixed> $values
 	 */
-	public function setValues( array $values ) {
+	public function setValues( array $values ): void {
 		foreach ( $values as $key => $value ) {
 			if ( ! $this->has( $key ) ) {
-				throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+				throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 			}
 
 			$this->properties[$key]->setValue( $value );
 		}
 	}
 
+	/**
+	 * Execute a callback on each property and return the collection.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable(ModelProperty):void $callback
+	 */
 	public function tap( callable $callback ): self {
 		foreach ( $this->properties as $property ) {
 			$callback( $property );
@@ -288,6 +321,8 @@ class ModelPropertyCollection implements \Countable, \IteratorAggregate {
 	 * Unset a property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @param string $key
 	 */
 	public function unsetProperty( $key ): void {
 		$this->getOrFail( $key )->unset();

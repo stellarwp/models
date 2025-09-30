@@ -5,7 +5,7 @@ namespace StellarWP\Models\Tests;
 use StellarWP\Models\Model;
 
 class MockModelWithAfterConstruct extends Model {
-	protected static $properties = [
+	protected static array $properties = [
 		'id' => 'int',
 		'name' => 'string',
 	];
@@ -13,7 +13,7 @@ class MockModelWithAfterConstruct extends Model {
 	public bool $afterConstructCalled = false;
 	public array $constructedAttributes = [];
 
-	protected function afterConstruct() {
+	protected function afterConstruct(): void {
 		$this->afterConstructCalled = true;
 		$this->constructedAttributes = $this->toArray();
 	}

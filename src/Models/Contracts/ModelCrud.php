@@ -7,7 +7,7 @@ use StellarWP\Models\ModelQueryBuilder;
 /**
  * @since 1.0.0
  */
-interface ModelCrud {
+interface ModelCrud extends ModelBuildsFromData {
 	/**
 	 * @since 1.0.0
 	 *
@@ -20,7 +20,7 @@ interface ModelCrud {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes
 	 *
 	 * @return Model
 	 */
@@ -43,7 +43,7 @@ interface ModelCrud {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @return ModelQueryBuilder
+	 * @return ModelQueryBuilder<static>
 	 */
 	public static function query();
 }

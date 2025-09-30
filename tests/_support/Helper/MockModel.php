@@ -5,7 +5,7 @@ namespace StellarWP\Models\Tests;
 use StellarWP\Models\Model;
 
 class MockModel extends Model {
-	protected static $properties = [
+	protected static array $properties = [
 		'id'           => 'int',
 		'firstName'    => [ 'string', 'Michael' ],
 		'lastName'     => 'string',

@@ -2,8 +2,8 @@
 
 namespace StellarWP\Models;
 
+use InvalidArgumentException;
 use JsonSerializable;
-use RuntimeException;
 use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
 use StellarWP\Models\ValueObjects\Relationship;
@@ -23,23 +23,23 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * The model properties assigned to their types.
 	 *
-	 * @var array<string,string|array>
+	 * @var array<string,string|array{0:string,1:mixed}>
 	 */
-	protected static $properties = [];
+	protected static array $properties = [];
 
 	/**
 	 * The model relationships assigned to their relationship types.
 	 *
 	 * @var array<string,string>
 	 */
-	protected static $relationships = [];
+	protected static array $relationships = [];
 
 	/**
 	 * Relationships that have already been loaded and don't need to be loaded again.
 	 *
-	 * @var Model[]
+	 * @var array<string,Model|list<Model>|null>
 	 */
-	private $cachedRelations = [];
+	private array $cachedRelations = [];
 
 	/**
 	 * Constructor.
@@ -58,17 +58,20 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 2.0.0
 	 */
-	protected function afterConstruct() {
-		// This method is meant to be overridden by the model to perform actions after the model is constructed.
+	protected function afterConstruct(): void {
 		return;
 	}
+
 	/**
 	 * Casts the value for the type, used when constructing a model from query data. If the model needs to support
 	 * additional types, especially class types, this method can be overridden.
 	 *
+	 * Note: Type casting is performed at runtime based on property definitions. PHPStan cannot statically verify
+	 * the resulting types, so we suppress type-checking errors for the cast operations.
+	 *
 	 * @since 2.0.0 changed to static
 	 *
-	 * @param string $type
+	 * @param ModelPropertyDefinition $definition The property definition.
 	 * @param mixed  $value The query data value to cast, probably a string.
 	 * @param string $property The property being casted.
 	 *
@@ -85,14 +88,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$type = $definition->getType();
 		if ( count( $type ) !== 1 ) {
-			throw new \InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
+			throw new InvalidArgumentException( "Property '$property' has multiple types: " . implode( ', ', $type ) . ". To support additional types, implement a custom castValueForProperty() method." );
 		}
 
+		// Runtime type casting based on property definition - PHPStan cannot verify this statically
 		switch ( $type[0] ) {
 			case 'int':
-				return (int) $value;
+				return (int) $value; // @phpstan-ignore-line
 			case 'string':
-				return (string) $value;
+				return (string) $value; // @phpstan-ignore-line
 			case 'bool':
 				return (bool) filter_var( $value, FILTER_VALIDATE_BOOLEAN );
 			case 'array':
@@ -136,7 +140,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * A more robust, alternative way to define properties for the model than static::$properties.
 	 *
-	 * @return array<string,ModelPropertyDefinition|array<string,mixed>>
+	 * @return array<string,ModelPropertyDefinition>
 	 */
 	protected static function properties(): array {
 		return [];
@@ -188,7 +192,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 		$definitions = static::getPropertyDefinitions();
 
 		if ( ! isset( $definitions[ $key ] ) ) {
-			throw new \InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
+			throw new InvalidArgumentException( 'Property ' . $key . ' does not exist.' );
 		}
 
 		return $definitions[ $key ];
@@ -202,27 +206,30 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	public static function getPropertyDefinitions(): array {
-		static $definition = null;
+		/** @var array<string,ModelPropertyDefinition>|null $cachedDefinitions */
+		static $cachedDefinitions = null;
 
-		if ( $definition === null ) {
+		if ( $cachedDefinitions === null ) {
 			$definitions = array_merge( static::$properties, static::properties() );
+			/** @var array<string,ModelPropertyDefinition> $processedDefinitions */
+			$processedDefinitions = [];
 
 			foreach ( $definitions as $key => $definition ) {
 				if ( ! is_string( $key ) ) {
-					throw new \InvalidArgumentException( 'Property key must be a string.' );
+					throw new InvalidArgumentException( 'Property key must be a string.' );
 				}
 
 				if ( ! $definition instanceof ModelPropertyDefinition ) {
 					$definition = ModelPropertyDefinition::fromShorthand( $definition );
 				}
 
-				$definitions[ $key ] = $definition->lock();
+				$processedDefinitions[ $key ] = $definition->lock();
 			}
 
-			$definition = $definitions;
+			$cachedDefinitions = $processedDefinitions;
 		}
 
-		return $definition;
+		return $cachedDefinitions;
 	}
 
 	/**
@@ -251,16 +258,46 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Checks if a method exists that returns a ModelQueryBuilder instance.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $method Method name.
+	 *
+	 * @return bool
+	 */
+	protected function hasRelationshipMethod( string $method ): bool {
+		if ( ! method_exists( $this, $method ) ) {
+			return false;
+		}
+
+		try {
+			$reflectionMethod = new \ReflectionMethod( $this, $method );
+			$returnType = $reflectionMethod->getReturnType();
+
+			if ( ! $returnType instanceof \ReflectionNamedType ) {
+				return false;
+			}
+
+			$typeName = $returnType->getName();
+
+			return $typeName === ModelQueryBuilder::class || is_subclass_of( $typeName, ModelQueryBuilder::class );
+		} catch ( \ReflectionException $e ) {
+			return false;
+		}
+	}
+
+	/**
 	 * Returns a relationship.
 	 *
 	 * @since 1.0.0
 	 *
 	 * @param string $key Relationship name.
 	 *
-	 * @return Model|Model[]
+	 * @return Model|list<Model>|null
 	 */
 	protected function getRelationship( string $key ) {
-		if ( ! is_callable( [ $this, $key ] ) ) {
+		if ( ! $this->hasRelationshipMethod( $key ) ) {
 			$exception = Config::getInvalidArgumentException();
 			throw new $exception( "$key() does not exist." );
 		}
@@ -269,16 +306,23 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 			return $this->cachedRelations[ $key ];
 		}
 
-		$relationship = static::$relationships[ $key ];
+		/** @var ModelQueryBuilder<Model> $queryBuilder */
+		$queryBuilder = $this->$key();
 
-		switch ( $relationship ) {
+		switch ( static::$relationships[ $key ] ) {
 			case Relationship::BELONGS_TO:
 			case Relationship::HAS_ONE:
-				return $this->cachedRelations[ $key ] = $this->$key()->get();
+				$result = $queryBuilder->get();
+				/** @var Model|null $result */
+				$this->cachedRelations[ $key ] = $result;
+				return $result;
 			case Relationship::HAS_MANY:
 			case Relationship::BELONGS_TO_MANY:
 			case Relationship::MANY_TO_MANY:
-				return $this->cachedRelations[ $key ] = $this->$key()->getAll();
+				$result = $queryBuilder->getAll();
+				/** @var list<Model>|null $result */
+				$this->cachedRelations[ $key ] = $result;
+				return $result;
 		}
 
 		return null;
@@ -384,7 +428,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	/**
 	 * Constructs a model instance from database query data.
 	 *
-	 * @param object|array $queryData
+	 * @param array<string,mixed>|object $data
 	 * @param int $mode The level of strictness to take when constructing the object, by default it will ignore extra keys but error on missing keys.
 	 * @return static
 	 */
@@ -412,7 +456,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$initialValues = [];
 
-		foreach (static::$properties as $key => $type) {
+		foreach (static::$properties as $key => $_) {
 			if ( ! array_key_exists( $key, $data ) ) {
 				// Skip missing properties when BUILD_MODE_IGNORE_MISSING is set
 				if ( $mode & self::BUILD_MODE_IGNORE_MISSING ) {
@@ -421,7 +465,6 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 				Config::throwInvalidArgumentException( "Property '$key' does not exist." );
 			}
 
-			// Remember not to use $type, as it may be an array that includes the default value. Safer to use getPropertyType().
 			$initialValues[ $key ] = static::castValueForProperty( static::getPropertyDefinition( $key ), $data[ $key ], $key );
 		}
 
@@ -433,7 +476,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return int[]|string[]
+	 * @return list<string>
 	 */
 	public static function propertyKeys() : array {
 		return array_keys( static::$properties );

@@ -5,9 +5,10 @@ namespace StellarWP\Models;
 use Closure;
 use Exception;
 use StellarWP\DB\DB;
+use StellarWP\Models\Contracts\ModelCrud;
 
 /**
- * @template M
+ * @template M of ModelCrud
  */
 abstract class ModelFactory {
 	/**
@@ -33,15 +34,17 @@ abstract class ModelFactory {
 
 	/**
 	 * Define the model's default state.
+	 *
+	 * @return array<string,mixed>
 	 */
 	abstract public function definition() : array;
 
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes
 	 *
-	 * @return M|M[]
+	 * @return M|list<M>
 	 */
 	public function make( array $attributes = [] ) {
 		$results = [];
@@ -57,7 +60,7 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.2.3
 	 */
-	public function makeAndResolveTo($property): Closure
+	public function makeAndResolveTo(string $property): Closure
 	{
 		return function() use ($property) {
 			return is_array($results = $this->make())
@@ -69,9 +72,9 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param array $attributes
+	 * @param array<string,mixed> $attributes
 	 *
-	 * @return M|M[]
+	 * @return M|list<M>
 	 * @throws Exception
 	 */
 	public function create( array $attributes = [] ) {
@@ -90,7 +93,7 @@ abstract class ModelFactory {
 	/**
 	 * @since 1.2.3
 	 */
-	public function createAndResolveTo( $property ): Closure {
+	public function createAndResolveTo( string $property ): Closure {
 		return function() use ( $property ) {
 			return is_array( $results = $this->create() )
 				? array_column( $results, $property )
@@ -104,6 +107,7 @@ abstract class ModelFactory {
 	 * @since 1.2.3 Add support for resolving Closures.
 	 * @since 1.0.0
 	 *
+	 * @param array<string,mixed> $attributes
 	 * @return M
 	 */
 	protected function makeInstance( array $attributes ) {
@@ -121,6 +125,8 @@ abstract class ModelFactory {
 	 * Configure the factory.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @return ModelFactory<M>
 	 */
 	public function configure() : self {
 		return $this;
@@ -130,6 +136,8 @@ abstract class ModelFactory {
 	 * Sets the number of models to generate.
 	 *
 	 * @since 1.0.0
+	 *
+	 * @return ModelFactory<M>
 	 */
 	public function count( int $count ) : self {
 		$this->count = $count;

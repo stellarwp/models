@@ -3,6 +3,7 @@
 namespace StellarWP\Models;
 
 use InvalidArgumentException;
+use Throwable;
 
 class Config {
 	/**
@@ -11,7 +12,7 @@ class Config {
 	protected static $hookPrefix;
 
 	/**
-	 * @var string
+	 * @var class-string<Throwable>
 	 */
 	protected static $invalidArgumentException = InvalidArgumentException::class;
 
@@ -40,7 +41,7 @@ class Config {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return string
+	 * @return class-string<Throwable>
 	 */
 	public static function getInvalidArgumentException(): string {
 		return static::$invalidArgumentException;
@@ -111,9 +112,12 @@ class Config {
 	 *
 	 * @param string $message
 	 *
-	 * @return void
+	 * @return never
+	 * @throws Throwable
 	 */
 	public static function throwInvalidArgumentException( string $message ): void {
-		throw new static::$invalidArgumentException( $message );
+		/** @var class-string<Throwable> $exceptionClass */
+		$exceptionClass = static::$invalidArgumentException;
+		throw new $exceptionClass( $message );
 	}
 }

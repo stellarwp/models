@@ -44,7 +44,7 @@ interface Model extends ModelBuildsFromData {
 	 *
 	 * @since 1.0.0
 	 *
-	 * @return array
+	 * @return array<string,mixed>
 	 */
 	public function getDirty() : array;
 
@@ -131,7 +131,7 @@ interface Model extends ModelBuildsFromData {
 	 * @since 2.0.0 changed to static
 	 * @since 1.0.0
 	 *
-	 * @return int[]|string[]
+	 * @return list<string>
 	 */
 	public static function propertyKeys() : array;
 

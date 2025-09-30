@@ -11,7 +11,7 @@ interface ModelBuildsFromData {
 	/**
 	 * @since 2.0.0
 	 *
-	 * @param array|object $data
+	 * @param array<string,mixed>|object $data
 	 *
 	 * @return Model
 	 */
