@@ -2,11 +2,11 @@
 
 namespace StellarWP\Models\Repositories;
 
-use StellarWP\Models\Contracts\ModelBuildsFromData;
+use StellarWP\Models\Contracts\Model;
 use StellarWP\Models\ModelQueryBuilder;
 
 /**
- * @template M of ModelBuildsFromData
+ * @template M of Model
  */
 abstract class Repository {
 	/**
