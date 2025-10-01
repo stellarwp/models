@@ -42,6 +42,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	private array $cachedRelations = [];
 
 	/**
+	 * Cached property definitions per class.
+	 *
+	 * @var array<class-string<Model>,array<string,ModelPropertyDefinition>>
+	 */
+	private static array $cachedDefinitions = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -199,6 +206,40 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Generates the property definitions for the model.
+	 *
+	 * This method processes the raw property definitions from static::$properties and static::properties(),
+	 * converting shorthand notation to ModelPropertyDefinition instances and locking them.
+	 *
+	 * Child classes can override this method to customize how property definitions are generated,
+	 * either by completely replacing the logic or by calling parent::generatePropertyDefinitions()
+	 * and modifying the results.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array<string,ModelPropertyDefinition>
+	 */
+	protected static function generatePropertyDefinitions(): array {
+		$definitions = array_merge( static::$properties, static::properties() );
+		/** @var array<string,ModelPropertyDefinition> $processedDefinitions */
+		$processedDefinitions = [];
+
+		foreach ( $definitions as $key => $definition ) {
+			if ( ! is_string( $key ) ) {
+				throw new InvalidArgumentException( 'Property key must be a string.' );
+			}
+
+			if ( ! $definition instanceof ModelPropertyDefinition ) {
+				$definition = ModelPropertyDefinition::fromShorthand( $definition );
+			}
+
+			$processedDefinitions[ $key ] = $definition->lock();
+		}
+
+		return $processedDefinitions;
+	}
+
+	/**
 	 * Returns the parsed property definitions for the model.
 	 *
 	 * @since 2.0.0
@@ -206,30 +247,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	public static function getPropertyDefinitions(): array {
-		/** @var array<string,ModelPropertyDefinition>|null $cachedDefinitions */
-		static $cachedDefinitions = null;
+		$class = static::class;
 
-		if ( $cachedDefinitions === null ) {
-			$definitions = array_merge( static::$properties, static::properties() );
-			/** @var array<string,ModelPropertyDefinition> $processedDefinitions */
-			$processedDefinitions = [];
-
-			foreach ( $definitions as $key => $definition ) {
-				if ( ! is_string( $key ) ) {
-					throw new InvalidArgumentException( 'Property key must be a string.' );
-				}
-
-				if ( ! $definition instanceof ModelPropertyDefinition ) {
-					$definition = ModelPropertyDefinition::fromShorthand( $definition );
-				}
-
-				$processedDefinitions[ $key ] = $definition->lock();
-			}
-
-			$cachedDefinitions = $processedDefinitions;
+		if ( ! isset( self::$cachedDefinitions[ $class ] ) ) {
+			self::$cachedDefinitions[ $class ] = static::generatePropertyDefinitions();
 		}
 
-		return $cachedDefinitions;
+		return self::$cachedDefinitions[ $class ];
 	}
 
 	/**
