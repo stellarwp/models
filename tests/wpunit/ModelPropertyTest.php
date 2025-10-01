@@ -187,6 +187,39 @@ class ModelPropertyTest extends ModelsTestCase {
 	/**
 	 * @since 2.0.0
 	 *
+	 * @covers ::isSet
+	 */
+	public function testIsSet() {
+		$definition = new ModelPropertyDefinition();
+
+		// Test with initial value
+		$property = new ModelProperty('name', $definition, 'John');
+		$this->assertTrue($property->isSet());
+
+		// Test with no initial value
+		$property = new ModelProperty('name', $definition);
+		$this->assertFalse($property->isSet());
+
+		// Test with default value
+		$definition = (new ModelPropertyDefinition())->default('default-value');
+		$property = new ModelProperty('name', $definition);
+		$this->assertTrue($property->isSet());
+
+		// Test with null value
+		$definition = (new ModelPropertyDefinition())->nullable();
+		$property = new ModelProperty('name', $definition);
+		$this->assertFalse($property->isSet());
+		$property->setValue(null);
+		$this->assertTrue($property->isSet());
+
+		// Test that a null initial value is also considered set
+		$property = new ModelProperty('name', $definition, null);
+		$this->assertTrue($property->isSet());
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
 	 * @covers ::unset
 	 * @covers ::isSet
 	 */
