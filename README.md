@@ -16,8 +16,7 @@ A library for a simple model structure.
   * [DataTransferObject](#data-transfer-objects)
   * [Repositories\Repository](#repositoriesrepository)
 * [Contracts of note](#contracts-of-note)
-  * [Contracts\ModelCrud](#contractsmodelcrud)
-  * [Contracts\ModelReadOnly](#contractsmodelreadonly)
+  * [Contracts\ModelPersistable](#contractsmodelpersistable)
   * [Repositories\Contracts\Deletable](#repositoriescontractsdeletable)
   * [Repositories\Contracts\Insertable](#repositoriescontractsinsertable)
   * [Repositories\Contracts\Updatable](#repositoriescontractsupdatable)
@@ -108,52 +107,11 @@ class Breakfast_Model extends Model {
 }
 ```
 
-### A ReadOnly model
+### A persistable model
 
-This is a model whose intent is to only read and store data. The Read operations should - in most cases - be deferred to
-a repository class, but the model should provide a simple interface for interacting with the repository. You can create
-ReadOnly model by implementing the `Contracts\ModelReadOnly` contract.
-
-```php
-namespace Boomshakalaka\Whatever;
-
-use Boomshakalaka\StellarWP\Models\Contracts;
-use Boomshakalaka\StellarWP\Models\Model;
-use Boomshakalaka\StellarWP\Models\ModelQueryBuilder;
-
-class Breakfast_Model extends Model implements Contracts\ModelReadOnly {
-	/**
-	 * @inheritDoc
-	 */
-	protected static $properties = [
-		'id'        => 'int',
-		'name'      => 'string',
-		'price'     => 'float',
-		'num_eggs'  => 'int',
-		'has_bacon' => 'bool',
-	];
-
-	/**
-	 * @inheritDoc
-	 */
-	public static function find( $id ) : Model {
-		return App::get( Repository::class )->get_by_id( $id );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public static function query() : ModelQueryBuilder {
-		return App::get( Repository::class )->prepare_query();
-	}
-}
-```
-
-### A CRUD model
-
-This is a model that includes CRUD operations. Ideally, the actual CRUD operations should be deferred to and handled by
-a repository class, but the model should provide a simple interface for interacting with the repository. We get a CRUD
-model by implementing the `Contracts\ModelCrud` contract.
+This is a model that includes persistence operations (create, find, save, delete). Ideally, the actual persistence operations should be deferred to and handled by
+a repository class, but the model should provide a simple interface for interacting with the repository. We get a persistable
+model by implementing the `Contracts\ModelPersistable` contract.
 
 ```php
 namespace Boomshakalaka\Whatever;
@@ -162,7 +120,7 @@ use Boomshakalaka\StellarWP\Models\Contracts;
 use Boomshakalaka\StellarWP\Models\Model;
 use Boomshakalaka\StellarWP\Models\ModelQueryBuilder;
 
-class Breakfast_Model extends Model implements Contracts\ModelCrud {
+class Breakfast_Model extends Model implements Contracts\ModelPersistable {
 	/**
 	 * @inheritDoc
 	 */
@@ -597,8 +555,7 @@ This is an abstract class to extend for your models.
 ### `ModelQueryBuilder`
 
 This class extends the [`stellarwp/db`](https://github.com/stellarwp/db) `QueryBuilder` class so that it returns
-model instances rather than arrays or `stdClass` instances. Using this requires models that implement the `ModelBuildsFromData`
-interface.
+model instances rather than arrays or `stdClass` instances.
 
 ### `DataTransferObject`
 
@@ -610,13 +567,9 @@ This is an abstract class to extend for your repositories.
 
 ## Contracts of note
 
-### `Contracts\ModelCrud`
+### `Contracts\ModelPersistable`
 
-Provides definitions of methods for CRUD operations in a model.
-
-### `Contracts\ModelReadOnly`
-
-Provides method signatures for read operations in a model.
+Provides definitions of methods for persistence operations in a model (create, find, save, delete, query).
 
 ### `Repositories\Contracts\Deletable`
 

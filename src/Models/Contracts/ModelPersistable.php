@@ -5,9 +5,10 @@ namespace StellarWP\Models\Contracts;
 use StellarWP\Models\ModelQueryBuilder;
 
 /**
+ * @since 2.0.0 renamed from ModelCrud
  * @since 1.0.0
  */
-interface ModelCrud extends ModelBuildsFromData {
+interface ModelPersistable extends Model {
 	/**
 	 * @since 1.0.0
 	 *

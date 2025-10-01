@@ -5,7 +5,7 @@ namespace StellarWP\Models\Contracts;
 use RuntimeException;
 use StellarWP\Models\ModelPropertyDefinition;
 
-interface Model extends ModelBuildsFromData {
+interface Model {
 	/**
 	 * Constructor.
 	 *
@@ -14,6 +14,17 @@ interface Model extends ModelBuildsFromData {
 	 * @param array<string,mixed> $attributes Attributes.
 	 */
 	public function __construct( array $attributes = [] );
+
+	/**
+	 * Constructs a model instance from a data array.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param array<string,mixed>|object $data
+	 *
+	 * @return static
+	 */
+	public static function fromData( $data );
 
 	/**
 	 * Fills the model with an array of attributes.
