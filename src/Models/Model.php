@@ -355,6 +355,80 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Purges the entire relationship cache.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	protected function purgeRelationshipCache(): void {
+		$this->cachedRelations = [];
+	}
+
+	/**
+	 * Purges a specific relationship from the cache.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key Relationship name.
+	 *
+	 * @return void
+	 */
+	protected function purgeRelationship( string $key ): void {
+		if ( ! isset( static::$relationships[ $key ] ) ) {
+			Config::throwInvalidArgumentException( "Relationship '$key' is not defined on this model." );
+		}
+
+		unset( $this->cachedRelations[ $key ] );
+	}
+
+	/**
+	 * Updates the cached value for a given relationship.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key Relationship name.
+	 * @param Model|list<Model>|null $value The relationship value to cache.
+	 *
+	 * @return void
+	 */
+	protected function setCachedRelationship( string $key, $value ): void {
+		if ( ! isset( static::$relationships[ $key ] ) ) {
+			Config::throwInvalidArgumentException( "Relationship '$key' is not defined on this model." );
+		}
+
+		// Validate the value is a Model, array of Models, or null
+		if ( $value !== null && ! $value instanceof Model && ! $this->isModelArray( $value ) ) {
+			Config::throwInvalidArgumentException( "Relationship value must be a Model instance, an array of Model instances, or null." );
+		}
+
+		$this->cachedRelations[ $key ] = $value;
+	}
+
+	/**
+	 * Checks if a value is an array of Model instances.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $value The value to check.
+	 *
+	 * @return bool
+	 */
+	private function isModelArray( $value ): bool {
+		if ( ! is_array( $value ) ) {
+			return false;
+		}
+
+		foreach ( $value as $item ) {
+			if ( ! $item instanceof Model ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Determines if the model has the given property.
 	 *
 	 * @since 2.0.0 changed to static
