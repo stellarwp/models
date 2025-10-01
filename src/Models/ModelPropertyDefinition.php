@@ -122,8 +122,6 @@ class ModelPropertyDefinition {
 	 * @throws RuntimeException When no cast method is set.
 	 */
 	public function cast( $value ) {
-		$this->checkLock();
-
 		if ( ! $this->canCast() ) {
 			throw new RuntimeException( 'No cast method set' );
 		}
