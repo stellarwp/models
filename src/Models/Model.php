@@ -42,6 +42,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	private array $cachedRelations = [];
 
 	/**
+	 * Cached property definitions per class.
+	 *
+	 * @var array<class-string<Model>,array<string,ModelPropertyDefinition>>
+	 */
+	private static array $cachedDefinitions = [];
+
+	/**
 	 * Constructor.
 	 *
 	 * @since 1.0.0
@@ -206,10 +213,9 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	public static function getPropertyDefinitions(): array {
-		/** @var array<string,ModelPropertyDefinition>|null $cachedDefinitions */
-		static $cachedDefinitions = null;
+		$class = static::class;
 
-		if ( $cachedDefinitions === null ) {
+		if ( ! isset( self::$cachedDefinitions[ $class ] ) ) {
 			$definitions = array_merge( static::$properties, static::properties() );
 			/** @var array<string,ModelPropertyDefinition> $processedDefinitions */
 			$processedDefinitions = [];
@@ -226,10 +232,47 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 				$processedDefinitions[ $key ] = $definition->lock();
 			}
 
-			$cachedDefinitions = $processedDefinitions;
+			self::$cachedDefinitions[ $class ] = $processedDefinitions;
 		}
 
-		return $cachedDefinitions;
+		return self::$cachedDefinitions[ $class ];
+	}
+
+	/**
+	 * Purges the property definition cache for the calling class.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string|null $key Optional property key to purge. If null, purges the entire cache for the class.
+	 *
+	 * @return void
+	 */
+	protected static function purgePropertyDefinitionCache( ?string $key = null ): void {
+		if ( $key === null ) {
+			unset( self::$cachedDefinitions[ static::class ] );
+		} else {
+			unset( self::$cachedDefinitions[ static::class ][ $key ] );
+		}
+	}
+
+	/**
+	 * Sets a property definition in the cache for the calling class.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key The property key.
+	 * @param ModelPropertyDefinition $definition The property definition.
+	 *
+	 * @return void
+	 */
+	protected static function setCachedPropertyDefinition( string $key, ModelPropertyDefinition $definition ): void {
+		$class = static::class;
+
+		if ( ! isset( self::$cachedDefinitions[ $class ] ) ) {
+			self::$cachedDefinitions[ $class ] = [];
+		}
+
+		self::$cachedDefinitions[ $class ][ $key ] = $definition;
 	}
 
 	/**
