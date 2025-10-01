@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StellarWP\Models;
 
 use InvalidArgumentException;
+use StellarWP\Models\Exceptions\ReadOnlyPropertyException;
 
 class ModelProperty {
 	private const NO_INITIAL_VALUE = '__NO_STELLARWP_MODELS_INITIAL_VALUE__';
@@ -173,10 +174,17 @@ class ModelProperty {
 	 * @since 2.0.0
 	 *
 	 * @param mixed $value
+	 *
+	 * @throws InvalidArgumentException When the value is invalid.
+	 * @throws ReadOnlyPropertyException When attempting to modify a readonly property.
 	 */
 	public function setValue( $value ): self {
+		if ( $this->definition->isReadonly() ) {
+			Config::throwReadOnlyPropertyException( $this, sprintf( 'Cannot modify readonly property "%s".', $this->key ) );
+		}
+
 		if ( ! $this->definition->isValidValue( $value ) ) {
-			throw new \InvalidArgumentException( 'Value is not valid for the property.' );
+			throw new InvalidArgumentException( 'Value is not valid for the property.' );
 		}
 
 		$this->value = $value;
@@ -190,8 +198,14 @@ class ModelProperty {
 	 * Unsets the value of the property.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @throws ReadOnlyPropertyException When attempting to unset a readonly property.
 	 */
 	public function unset(): void {
+		if ( $this->definition->isReadonly() ) {
+			Config::throwReadOnlyPropertyException( $this, sprintf( 'Cannot unset readonly property "%s".', $this->key ) );
+		}
+
 		// Mark the value as unset
 		$this->isValueSet = false;
 

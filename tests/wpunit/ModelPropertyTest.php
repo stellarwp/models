@@ -2,6 +2,7 @@
 
 namespace StellarWP\Models\Tests\Unit;
 
+use StellarWP\Models\Exceptions\ReadOnlyPropertyException;
 use StellarWP\Models\ModelProperty;
 use StellarWP\Models\ModelPropertyDefinition;
 use StellarWP\Models\Tests\ModelsTestCase;
@@ -268,5 +269,76 @@ class ModelPropertyTest extends ModelsTestCase {
 
 		// Should no longer be dirty because original value was not set
 		$this->assertFalse($property->isDirty());
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::__construct
+	 * @covers ::setValue
+	 */
+	public function testReadonlyPropertyCanBeSetInConstructor() {
+		$definition = new ModelPropertyDefinition();
+		$definition->type('string')->readonly();
+
+		// Should be able to set readonly property in constructor
+		$property = new ModelProperty('id', $definition, 'initial-value');
+
+		$this->assertSame('initial-value', $property->getValue());
+		$this->assertTrue($property->isSet());
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::setValue
+	 */
+	public function testReadonlyPropertyCannotBeModified() {
+		$definition = new ModelPropertyDefinition();
+		$definition->type('string')->readonly();
+
+		$property = new ModelProperty('id', $definition, 'initial-value');
+
+		$this->expectException(ReadOnlyPropertyException::class);
+		$this->expectExceptionMessage('Cannot modify readonly property "id".');
+
+		$property->setValue('new-value');
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::unset
+	 */
+	public function testReadonlyPropertyCannotBeUnset() {
+		$definition = new ModelPropertyDefinition();
+		$definition->type('string')->readonly();
+
+		$property = new ModelProperty('id', $definition, 'initial-value');
+
+		$this->expectException(ReadOnlyPropertyException::class);
+		$this->expectExceptionMessage('Cannot unset readonly property "id".');
+
+		$property->unset();
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::setValue
+	 */
+	public function testReadonlyExceptionContainsProperty() {
+		$definition = new ModelPropertyDefinition();
+		$definition->type('string')->readonly();
+
+		$property = new ModelProperty('id', $definition, 'initial-value');
+
+		try {
+			$property->setValue('new-value');
+			$this->fail('Expected ReadOnlyPropertyException to be thrown');
+		} catch (ReadOnlyPropertyException $e) {
+			$this->assertInstanceOf(ModelProperty::class, $e->getProperty());
+			$this->assertSame('id', $e->getProperty()->getKey());
+		}
 	}
 }

@@ -69,6 +69,15 @@ class ModelPropertyDefinition {
 	private bool $requiredOnSave = false;
 
 	/**
+	 * Whether the property is readonly.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var bool
+	 */
+	private bool $readonly = false;
+
+	/**
 	 * The type of the property.
 	 *
 	 * @since 2.0.0
@@ -251,6 +260,15 @@ class ModelPropertyDefinition {
 	}
 
 	/**
+	 * Whether the property is readonly.
+	 *
+	 * @since 2.0.0
+	 */
+	public function isReadonly(): bool {
+		return $this->readonly;
+	}
+
+	/**
 	 * Whether the property is valid for the given value.
 	 *
 	 * @since 2.0.0
@@ -333,6 +351,19 @@ class ModelPropertyDefinition {
 		$this->checkLock();
 
 		$this->requiredOnSave = true;
+
+		return $this;
+	}
+
+	/**
+	 * Makes the property readonly.
+	 *
+	 * @since 2.0.0
+	 */
+	public function readonly(): self {
+		$this->checkLock();
+
+		$this->readonly = true;
 
 		return $this;
 	}

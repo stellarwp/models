@@ -112,6 +112,21 @@ class ModelPropertyDefinitionTest extends ModelsTestCase {
 	/**
 	 * @since 2.0.0
 	 *
+	 * @covers ::readonly
+	 * @covers ::isReadonly
+	 */
+	public function testReadonlyAndIsReadonly() {
+		$definition = new ModelPropertyDefinition();
+
+		$this->assertFalse($definition->isReadonly());
+
+		$definition->readonly();
+		$this->assertTrue($definition->isReadonly());
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
 	 * @covers ::lock
 	 * @covers ::isLocked
 	 * @covers ::checkLock
