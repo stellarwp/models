@@ -6,7 +6,6 @@ use InvalidArgumentException;
 use JsonSerializable;
 use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
-use StellarWP\Models\ValueObjects\Relationship;
 
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public const BUILD_MODE_STRICT = 0;
@@ -35,18 +34,25 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	protected static array $relationships = [];
 
 	/**
-	 * Relationships that have already been loaded and don't need to be loaded again.
-	 *
-	 * @var array<string,Model|list<Model>|null>
-	 */
-	private array $cachedRelations = [];
-
-	/**
 	 * Cached property definitions per class.
 	 *
 	 * @var array<class-string<Model>,array<string,ModelPropertyDefinition>>
 	 */
 	private static array $cachedDefinitions = [];
+
+	/**
+	 * The model's relationships.
+	 *
+	 * @var ModelRelationshipCollection
+	 */
+	protected ModelRelationshipCollection $relationshipCollection;
+
+	/**
+	 * Cached relationship definitions per class.
+	 *
+	 * @var array<class-string<Model>,array<string,ModelRelationshipDefinition>>
+	 */
+	private static array $cachedRelationshipDefinitions = [];
 
 	/**
 	 * Constructor.
@@ -57,6 +63,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 */
 	final public function __construct( array $attributes = [] ) {
 		$this->propertyCollection = ModelPropertyCollection::fromPropertyDefinitions( static::getPropertyDefinitions(), $attributes );
+		$this->relationshipCollection = ModelRelationshipCollection::fromRelationshipDefinitions( static::getRelationshipDefinitions() );
 		$this->afterConstruct();
 	}
 
@@ -150,6 +157,15 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return array<string,ModelPropertyDefinition>
 	 */
 	protected static function properties(): array {
+		return [];
+	}
+
+	/**
+	 * A more robust, alternative way to define relationships for the model than static::$relationships.
+	 *
+	 * @return array<string,ModelRelationshipDefinition>
+	 */
+	protected static function relationships(): array {
 		return [];
 	}
 
@@ -257,6 +273,57 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Generates the relationship definitions for the model.
+	 *
+	 * This method processes the raw relationship definitions from static::$relationships and static::relationships(),
+	 * converting shorthand notation to ModelRelationshipDefinition instances and locking them.
+	 *
+	 * Child classes can override this method to customize how relationship definitions are generated,
+	 * either by completely replacing the logic or by calling parent::generateRelationshipDefinitions()
+	 * and modifying the results.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array<string,ModelRelationshipDefinition>
+	 */
+	protected static function generateRelationshipDefinitions(): array {
+		$definitions = array_merge( static::$relationships, static::relationships() );
+		/** @var array<string,ModelRelationshipDefinition> $processedDefinitions */
+		$processedDefinitions = [];
+
+		foreach ( $definitions as $key => $definition ) {
+			if ( ! is_string( $key ) ) {
+				throw new InvalidArgumentException( 'Relationship key must be a string.' );
+			}
+
+			if ( ! $definition instanceof ModelRelationshipDefinition ) {
+				$definition = ModelRelationshipDefinition::fromShorthand( $key, $definition );
+			}
+
+			$processedDefinitions[ $key ] = $definition->lock();
+		}
+
+		return $processedDefinitions;
+	}
+
+	/**
+	 * Returns the parsed relationship definitions for the model.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return array<string,ModelRelationshipDefinition>
+	 */
+	public static function getRelationshipDefinitions(): array {
+		$class = static::class;
+
+		if ( ! isset( self::$cachedRelationshipDefinitions[ $class ] ) ) {
+			self::$cachedRelationshipDefinitions[ $class ] = static::generateRelationshipDefinitions();
+		}
+
+		return self::$cachedRelationshipDefinitions[ $class ];
+	}
+
+	/**
 	 * Returns the model's original attribute values.
 	 *
 	 * @since 1.0.0
@@ -312,6 +379,38 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	}
 
 	/**
+	 * Fetches a relationship from the database.
+	 *
+	 * This method can be overridden by subclasses to customize how relationships are loaded.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param string $key Relationship name.
+	 *
+	 * @return Model|list<Model>|null
+	 */
+	protected function fetchRelationship( string $key ) {
+		if ( ! $this->hasRelationshipMethod( $key ) ) {
+			$exception = Config::getInvalidArgumentException();
+			throw new $exception( "$key() does not exist." );
+		}
+
+		/** @var ModelQueryBuilder<Model> $queryBuilder */
+		$queryBuilder = $this->$key();
+		$definition = $this->relationshipCollection->getOrFail( $key )->getDefinition();
+
+		if ( $definition->isMultiple() ) {
+			$result = $queryBuilder->getAll();
+			/** @var list<Model>|null $result */
+			return $result;
+		}
+
+		$result = $queryBuilder->get();
+		/** @var Model|null $result */
+		return $result;
+	}
+
+	/**
 	 * Returns a relationship.
 	 *
 	 * @since 1.0.0
@@ -320,36 +419,8 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return Model|list<Model>|null
 	 */
-	protected function getRelationship( string $key ) {
-		if ( ! $this->hasRelationshipMethod( $key ) ) {
-			$exception = Config::getInvalidArgumentException();
-			throw new $exception( "$key() does not exist." );
-		}
-
-		if ( $this->hasCachedRelationship( $key ) ) {
-			return $this->cachedRelations[ $key ];
-		}
-
-		/** @var ModelQueryBuilder<Model> $queryBuilder */
-		$queryBuilder = $this->$key();
-
-		switch ( static::$relationships[ $key ] ) {
-			case Relationship::BELONGS_TO:
-			case Relationship::HAS_ONE:
-				$result = $queryBuilder->get();
-				/** @var Model|null $result */
-				$this->cachedRelations[ $key ] = $result;
-				return $result;
-			case Relationship::HAS_MANY:
-			case Relationship::BELONGS_TO_MANY:
-			case Relationship::MANY_TO_MANY:
-				$result = $queryBuilder->getAll();
-				/** @var list<Model>|null $result */
-				$this->cachedRelations[ $key ] = $result;
-				return $result;
-		}
-
-		return null;
+	private function getRelationship( string $key ) {
+		return $this->relationshipCollection->getOrFail( $key )->getValue( fn() => $this->fetchRelationship( $key ) );
 	}
 
 	/**
@@ -375,7 +446,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return bool
 	 */
 	protected function hasCachedRelationship( string $key ) : bool {
-		return array_key_exists( $key, $this->cachedRelations );
+		return $this->relationshipCollection->has( $key ) && $this->relationshipCollection->isLoaded( $key );
 	}
 
 	/**
@@ -386,7 +457,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return void
 	 */
 	protected function purgeRelationshipCache(): void {
-		$this->cachedRelations = [];
+		$this->relationshipCollection->purgeAll();
 	}
 
 	/**
@@ -399,11 +470,11 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return void
 	 */
 	protected function purgeRelationship( string $key ): void {
-		if ( ! isset( static::$relationships[ $key ] ) ) {
+		if ( ! $this->relationshipCollection->has( $key ) ) {
 			Config::throwInvalidArgumentException( "Relationship '$key' is not defined on this model." );
 		}
 
-		unset( $this->cachedRelations[ $key ] );
+		$this->relationshipCollection->purge( $key );
 	}
 
 	/**
@@ -417,39 +488,13 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return void
 	 */
 	protected function setCachedRelationship( string $key, $value ): void {
-		if ( ! isset( static::$relationships[ $key ] ) ) {
+		$relationship = $this->relationshipCollection->get( $key );
+
+		if ( ! $relationship ) {
 			Config::throwInvalidArgumentException( "Relationship '$key' is not defined on this model." );
 		}
 
-		// Validate the value is a Model, array of Models, or null
-		if ( $value !== null && ! $value instanceof Model && ! $this->isModelArray( $value ) ) {
-			Config::throwInvalidArgumentException( "Relationship value must be a Model instance, an array of Model instances, or null." );
-		}
-
-		$this->cachedRelations[ $key ] = $value;
-	}
-
-	/**
-	 * Checks if a value is an array of Model instances.
-	 *
-	 * @since 2.0.0
-	 *
-	 * @param mixed $value The value to check.
-	 *
-	 * @return bool
-	 */
-	private function isModelArray( $value ): bool {
-		if ( ! is_array( $value ) ) {
-			return false;
-		}
-
-		foreach ( $value as $item ) {
-			if ( ! $item instanceof Model ) {
-				return false;
-			}
-		}
-
-		return true;
+		$relationship->setValue( $value );
 	}
 
 	/**
@@ -649,7 +694,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return mixed
 	 */
 	public function __get( string $key ) {
-		if ( array_key_exists( $key, static::$relationships ) ) {
+		if ( $this->relationshipCollection->has( $key ) ) {
 			return $this->getRelationship( $key );
 		}
 
