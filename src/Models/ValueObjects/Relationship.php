@@ -2,7 +2,7 @@
 
 namespace StellarWP\Models\ValueObjects;
 
-use InvalidArgumentException;
+use StellarWP\Models\Config;
 
 /**
  * Model Relationship Value Object
@@ -56,12 +56,10 @@ class Relationship {
 	 * @param string $value The relationship type value.
 	 *
 	 * @return self
-	 *
-	 * @throws InvalidArgumentException When the value is invalid.
 	 */
 	private static function getInstance( string $value ): self {
 		if ( ! self::isValid( $value ) ) {
-			throw new InvalidArgumentException( "Invalid relationship type: {$value}" );
+			Config::throwInvalidArgumentException( "Invalid relationship type: {$value}" );
 		}
 
 		if ( ! isset( self::$instances[ $value ] ) ) {
@@ -77,8 +75,6 @@ class Relationship {
 	 * @param string $value The relationship type value.
 	 *
 	 * @return self
-	 *
-	 * @throws InvalidArgumentException When the value is invalid.
 	 */
 	public static function from( string $value ): self {
 		return self::getInstance( $value );
@@ -91,8 +87,6 @@ class Relationship {
 	 * @param array<mixed> $arguments The method arguments (none expected).
 	 *
 	 * @return self
-	 *
-	 * @throws InvalidArgumentException When the method name doesn't match a valid relationship type.
 	 */
 	public static function __callStatic( string $name, array $arguments ): self {
 		$value = strtolower( str_replace( '_', '-', $name ) );
@@ -115,8 +109,6 @@ class Relationship {
 	 * @param array<mixed> $arguments The method arguments (none expected).
 	 *
 	 * @return bool
-	 *
-	 * @throws InvalidArgumentException When the method name doesn't match a valid relationship type.
 	 */
 	public function __call( string $name, array $arguments ): bool {
 		if ( strpos( $name, 'is' ) === 0 ) {
@@ -130,7 +122,7 @@ class Relationship {
 			}
 		}
 
-		throw new InvalidArgumentException( "Method {$name} does not exist on Relationship." );
+		Config::throwInvalidArgumentException( "Method {$name} does not exist on Relationship." );
 	}
 
 	/**
