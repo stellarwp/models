@@ -419,7 +419,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return Model|list<Model>|null
 	 */
-	private function getRelationship( string $key ) {
+	protected function getRelationship( string $key ) {
 		return $this->relationshipCollection->getOrFail( $key )->getValue( fn() => $this->fetchRelationship( $key ) );
 	}
 
