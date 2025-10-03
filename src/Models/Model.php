@@ -583,16 +583,18 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$data = (array) $data;
 
+		$properties = array_merge( static::$properties, static::properties() );
+
 		// If we're not ignoring extra keys, check for them and throw an exception if any are found.
 		if ( ! ($mode & self::BUILD_MODE_IGNORE_EXTRA) ) {
-			$extraKeys = array_diff_key( (array) $data, static::$properties );
+			$extraKeys = array_diff_key( (array) $data, $properties );
 			if ( ! empty( $extraKeys ) ) {
 				Config::throwInvalidArgumentException( 'Query data contains extra keys: ' . implode( ', ', array_keys( $extraKeys ) ) );
 			}
 		}
 
 		if ( ! ($mode & self::BUILD_MODE_IGNORE_MISSING) ) {
-			$missingKeys = array_diff_key( static::$properties, (array) $data );
+			$missingKeys = array_diff_key( $properties, (array) $data );
 			if ( ! empty( $missingKeys ) ) {
 				Config::throwInvalidArgumentException( 'Query data is missing keys: ' . implode( ', ', array_keys( $missingKeys ) ) );
 			}
@@ -600,7 +602,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		$initialValues = [];
 
-		foreach (static::$properties as $key => $_) {
+		foreach ($properties as $key => $_) {
 			if ( ! array_key_exists( $key, $data ) ) {
 				// Skip missing properties when BUILD_MODE_IGNORE_MISSING is set
 				if ( $mode & self::BUILD_MODE_IGNORE_MISSING ) {

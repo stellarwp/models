@@ -32,7 +32,7 @@
     "codeception/module-rest": "^1.0",
     "codeception/module-webdriver": "^1.0",
     "codeception/util-universalframework": "^1.0",
-    "lucatume/wp-browser": "^3.0.14",
+    "lucatume/wp-browser": "^3.7",
     "phpunit/phpunit": "~6.0",
     "phpstan/phpstan": "^2.1"
   },

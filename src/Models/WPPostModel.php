@@ -30,7 +30,6 @@ class WPPostModel extends Model implements ModelPersistable {
 		return [
 			'ID' => (new ModelPropertyDefinition())
 				->type('int')
-				->readonly()
 				->required(),
 			'post_author' => (new ModelPropertyDefinition())
 				->type('string')
@@ -135,7 +134,7 @@ class WPPostModel extends Model implements ModelPersistable {
 	 * @return self
 	 */
 	public static function create( array $attributes ): self {
-		$model = static::fromData( $attributes );
+		$model = static::fromData( $attributes, 1 );
 
 		return $model->save();
 	}
