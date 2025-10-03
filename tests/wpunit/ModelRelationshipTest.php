@@ -2,7 +2,6 @@
 
 namespace StellarWP\Models\Tests\Unit;
 
-use StellarWP\Models\Contracts\LazyModel;
 use StellarWP\Models\Model;
 use StellarWP\Models\ModelRelationship;
 use StellarWP\Models\ModelRelationshipDefinition;
