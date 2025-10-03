@@ -12,11 +12,11 @@ interface ModelPersistable extends Model {
 	/**
 	 * @since 1.0.0
 	 *
-	 * @param int $id
+	 * @param int|string $id
 	 *
-	 * @return Model
+	 * @return ?Model
 	 */
-	public static function find( $id );
+	public static function find( $id ): ?Model;
 
 	/**
 	 * @since 1.0.0
@@ -32,7 +32,7 @@ interface ModelPersistable extends Model {
 	 *
 	 * @return Model
 	 */
-	public function save();
+	public function save(): Model;
 
 	/**
 	 * @since 1.0.0
@@ -46,5 +46,5 @@ interface ModelPersistable extends Model {
 	 *
 	 * @return ModelQueryBuilder<static>
 	 */
-	public static function query();
+	public static function query(): ModelQueryBuilder;
 }

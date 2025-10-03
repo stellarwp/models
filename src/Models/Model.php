@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use JsonSerializable;
 use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
+use StellarWP\Models\Contracts\LazyModel as LazyModelInterface;
 
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	public const BUILD_MODE_STRICT = 0;
@@ -483,7 +484,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 2.0.0
 	 *
 	 * @param string $key Relationship name.
-	 * @param Model|list<Model>|null $value The relationship value to cache.
+	 * @param Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null $value The relationship value to cache.
 	 *
 	 * @return void
 	 */

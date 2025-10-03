@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StellarWP\Models;
 
 use InvalidArgumentException;
+use StellarWP\Models\Contracts\LazyModel as LazyModelInterface;
 
 /**
  * Represents a model relationship instance with its loaded value.
@@ -72,7 +73,7 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable():( Model|list<Model>|null ) $loader A callable that loads the relationship value.
+	 * @param callable():( Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null ) $loader A callable that loads the relationship value.
 	 *
 	 * @return Model|list<Model>|null
 	 */
@@ -84,12 +85,46 @@ class ModelRelationship {
 
 		// If already loaded and caching is enabled, return cached value
 		if ( $this->isLoaded ) {
-			return $this->value;
+			return $this->resolveValue( $this->value );
 		}
 
 		// Load and cache the value
 		$this->setValue( $loader() );
+		return $this->resolveValue( $this->value );
+	}
+
+	/**
+	 * Get the raw value of the relationship, loading it if necessary.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable():( Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null ) $loader A callable that loads the relationship value.
+	 *
+	 * @return Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null
+	 */
+	public function getRawValue( callable $loader ) {
+		$this->getValue( $loader );
+
 		return $this->value;
+	}
+
+	/**
+	 * Resolve the value of the relationship.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null $value The value to resolve.
+	 *
+	 * @return Model|list<Model>|null
+	 */
+	private function resolveValue( $value ) {
+		$callback = fn( $v ) => $v instanceof LazyModelInterface ? $v->resolve() : $v;
+
+		if ( is_array( $value ) ) {
+			return array_map( $callback, $value );
+		}
+
+		return $callback( $value );
 	}
 
 	/**
