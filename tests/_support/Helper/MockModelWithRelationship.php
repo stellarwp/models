@@ -21,13 +21,13 @@ class MockModelWithRelationship extends Model {
 	 * @return ModelQueryBuilder<MockModel>
 	 */
 	public function relatedAndCallableHasOne(): ModelQueryBuilder {
-		return ( new ModelQueryBuilder( MockModel::class ) )->from( 'posts' );
+		return ( new ModelQueryBuilder( MockModel::class ) )->select( 'ID as id', 'post_title as firstName', 'post_content as lastName', 'post_status as emails', 'post_date as microseconds', 'post_date_gmt as number', 'post_date as date' )->from( 'posts' );
 	}
 
 	/**
 	 * @return ModelQueryBuilder<MockModel>
 	 */
 	public function relatedAndCallableHasMany(): ModelQueryBuilder {
-		return ( new ModelQueryBuilder( MockModel::class ) )->from( 'posts' );
+		return ( new ModelQueryBuilder( MockModel::class ) )->select( 'ID as id', 'post_title as firstName', 'post_content as lastName', 'post_status as emails', 'post_date as microseconds', 'post_date_gmt as number', 'post_date as date' )->from( 'posts' );
 	}
 }

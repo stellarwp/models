@@ -2,11 +2,15 @@
 
 namespace StellarWP\Models\Tests\Unit;
 
+use StellarWP\Models\Contracts\LazyModel;
 use StellarWP\Models\Model;
 use StellarWP\Models\ModelRelationship;
 use StellarWP\Models\ModelRelationshipDefinition;
+use StellarWP\Models\ModelPropertyDefinition;
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\ValueObjects\Relationship;
+use StellarWP\Models\WPPostModel;
+use StellarWP\Models\LazyWPPostModel;
 
 /**
  * @coversDefaultClass \StellarWP\Models\ModelRelationship
@@ -219,5 +223,187 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$this->assertTrue($relationship->isLoaded());
 		$loader = fn() => $this->fail('Loader should not be called');
 		$this->assertNull($relationship->getValue($loader));
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::getValue
+	 * @covers ::resolveValue
+	 */
+	public function testGetValueResolvesLazyModelToActualModel() {
+		$post = WPPostModel::create([
+			'post_title' => 'Test Post',
+			'post_content' => 'Test content',
+			'post_status' => 'publish',
+		]);
+
+		$GLOBALS['models_post_id'] = $post->getAttribute('ID');
+		$model = new class extends Model {
+			protected static function relationships(): array {
+				return [
+					'post' => new ModelRelationshipDefinition('post', Relationship::HAS_ONE),
+				];
+			}
+
+			protected static function properties(): array {
+				return [
+					'id' => new ModelPropertyDefinition('id', 'int'),
+				];
+			}
+
+			protected function fetchRelationship( string $key ) {
+				return new LazyWPPostModel($GLOBALS['models_post_id']);
+			}
+		};
+
+		$this->assertInstanceOf( WPPostModel::class, $model->post );
+		$this->assertSame($post->getAttribute('ID'), $model->post->getAttribute('ID'));
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::getValue
+	 * @covers ::resolveValue
+	 */
+	public function testGetValueResolvesArrayOfLazyModels() {
+		$post_1 = WPPostModel::create([
+			'post_title' => 'Test Post 1',
+			'post_content' => 'Test content',
+			'post_status' => 'publish',
+		]);
+
+		$post_2 = WPPostModel::create([
+			'post_title' => 'Test Post 2',
+			'post_content' => 'Test content',
+			'post_status' => 'publish',
+		]);
+
+		$GLOBALS['models_post_id_1'] = $post_1->getAttribute('ID');
+		$GLOBALS['models_post_id_2'] = $post_2->getAttribute('ID');
+
+		$model = new class extends Model {
+			protected static function relationships(): array {
+				return [
+					'posts' => new ModelRelationshipDefinition('posts', Relationship::HAS_MANY),
+				];
+			}
+
+			protected static function properties(): array {
+				return [
+					'id' => new ModelPropertyDefinition('id', 'int'),
+				];
+			}
+
+			protected function fetchRelationship( string $key ) {
+				return [
+					new LazyWPPostModel($GLOBALS['models_post_id_1']),
+					new LazyWPPostModel($GLOBALS['models_post_id_2']),
+				];
+			}
+		};
+
+		$results = $model->posts;
+		$this->assertInstanceOf( WPPostModel::class, $results[0] );
+		$this->assertInstanceOf( WPPostModel::class, $results[1] );
+		$this->assertSame($post_1->getAttribute('ID'), $results[0]->getAttribute('ID'));
+		$this->assertSame($post_2->getAttribute('ID'), $results[1]->getAttribute('ID'));
+	}
+
+		/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::getValue
+	 * @covers ::resolveValue
+	 */
+	public function testGetValueResolvesLazyModelToNull() {
+		$model = new class extends Model {
+			protected static function relationships(): array {
+				return [
+					'post' => new ModelRelationshipDefinition('post', Relationship::HAS_ONE),
+				];
+			}
+
+			protected static function properties(): array {
+				return [
+					'id' => new ModelPropertyDefinition('id', 'int'),
+				];
+			}
+
+			protected function fetchRelationship( string $key ) {
+				return new LazyWPPostModel( null );
+			}
+		};
+
+		$this->assertNull( $model->post );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::getValue
+	 * @covers ::resolveValue
+	 */
+	public function testGetValueResolvesArrayOfLazyModelsToNull() {
+		$model = new class extends Model {
+			protected static function relationships(): array {
+				return [
+					'posts' => new ModelRelationshipDefinition('posts', Relationship::HAS_MANY),
+				];
+			}
+
+			protected static function properties(): array {
+				return [
+					'id' => new ModelPropertyDefinition('id', 'int'),
+				];
+			}
+
+			protected function fetchRelationship( string $key ) {
+				return [
+					new LazyWPPostModel( null ),
+					new LazyWPPostModel( null ),
+				];
+			}
+		};
+
+		$results = $model->posts;
+		$this->assertEmpty( $results );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @covers ::getValue
+	 * @covers ::resolveValue
+	 */
+	public function testGetRawValueReturnsLazyModelWithoutResolving() {
+		$post = WPPostModel::create([
+			'post_title' => 'Test Post',
+			'post_content' => 'Test content',
+			'post_status' => 'publish',
+		]);
+
+		$GLOBALS['models_post_id'] = $post->getAttribute('ID');
+		$model = new class extends Model {
+			protected static function relationships(): array {
+				return [
+					'post' => new ModelRelationshipDefinition('post', Relationship::HAS_ONE),
+				];
+			}
+
+			protected static function properties(): array {
+				return [
+					'id' => new ModelPropertyDefinition('id', 'int'),
+				];
+			}
+
+			protected function fetchRelationship( string $key ) {
+				return new LazyWPPostModel($GLOBALS['models_post_id']);
+			}
+		};
+
+		$this->assertInstanceOf( WPPostModel::class, $model->post );
+		$this->assertSame($post->getAttribute('ID'), $model->post->getAttribute('ID'));
 	}
 }

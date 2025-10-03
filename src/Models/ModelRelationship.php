@@ -122,7 +122,7 @@ class ModelRelationship {
 
 		if ( is_array( $value ) ) {
 			/** @var Model[] */
-			return array_map( $callback, $value );
+			return array_filter( array_map( $callback, $value ) );
 		}
 
 		/** @var Model|null */
@@ -160,7 +160,7 @@ class ModelRelationship {
 	public function setValue( $value ): self {
 		// Validate the value
 		if ( $value !== null ) {
-			if ( $this->definition->isSingle() && ! $value instanceof Model ) {
+			if ( $this->definition->isSingle() && ! $value instanceof Model && ! $value instanceof LazyModelInterface ) {
 				throw new InvalidArgumentException( 'Single relationship value must be a Model instance or null.' );
 			}
 
@@ -170,7 +170,7 @@ class ModelRelationship {
 				}
 
 				foreach ( $value as $item ) {
-					if ( ! $item instanceof Model ) {
+					if ( ! $item instanceof Model && ! $item instanceof LazyModelInterface ) {
 						throw new InvalidArgumentException( 'Multiple relationship value must be an array of Model instances.' );
 					}
 				}

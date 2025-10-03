@@ -4,6 +4,7 @@ namespace StellarWP\Models;
 
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
+use StellarWP\Models\Tests\BadMockModel;
 use StellarWP\Models\Tests\MockModelWithAfterConstruct;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
@@ -317,14 +318,14 @@ class TestModel extends ModelsTestCase {
 		$this->expectException( Config::getInvalidArgumentException() );
 		$this->expectExceptionMessage( "Unexpected type: 'DateTime'. To support additional types, overload this method or use Definition casting." );
 
-		MockModel::fromData( [
+		BadMockModel::fromData( [
 			'id' => 1,
 			'firstName' => 'Bill',
 			'lastName' => 'Murray',
 			'emails' => [],
 			'microseconds' => 123.45,
 			'number' => 123,
-			'date' => '2023-01-01',
+			'date' => '2023-01-01 12:00:00',
 		] );
 	}
 
