@@ -4,7 +4,6 @@ namespace StellarWP\Models\Tests\Unit;
 
 use RuntimeException;
 use StellarWP\Models\WPPostModel;
-use StellarWP\Models\Tests\ModelsTestCase;
 use lucatume\WPBrowser\TestCase\WPTestCase;
 
 /**

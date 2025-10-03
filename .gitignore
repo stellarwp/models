@@ -4,3 +4,5 @@ repo/
 vendor/
 .idea
 .vscode
+tests/_support/_generated/*
+!tests/_support/_generated/.gitkeep
