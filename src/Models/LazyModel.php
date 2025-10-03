@@ -54,6 +54,17 @@ abstract class LazyModel implements LazyModelInterface {
 	}
 
 	/**
+	 * Returns the ID of the model as a string.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return string
+	 */
+	public function __toString() {
+		return (string) $this->get_id();
+	}
+
+	/**
 	 * Resolves the model.
 	 *
 	 * @since 2.0.0

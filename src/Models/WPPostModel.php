@@ -189,6 +189,6 @@ class WPPostModel extends Model implements ModelPersistable {
 	 * @return ModelQueryBuilder<static>
 	 */
 	public static function query(): ModelQueryBuilder {
-		return new ModelQueryBuilder( static::class );
+		return ( new ModelQueryBuilder( static::class ) )->from( 'posts' );
 	}
 }
