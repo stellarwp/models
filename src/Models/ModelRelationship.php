@@ -33,7 +33,7 @@ class ModelRelationship {
 	/**
 	 * The relationship value.
 	 *
-	 * @var Model|list<Model>|null
+	 * @var Model|Model[]|LazyModelInterface|LazyModelInterface[]|null
 	 */
 	private $value;
 
@@ -73,14 +73,14 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable():( Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null ) $loader A callable that loads the relationship value.
+	 * @param callable():( Model|Model[]|LazyModelInterface|LazyModelInterface[]|null ) $loader A callable that loads the relationship value.
 	 *
-	 * @return Model|list<Model>|null
+	 * @return Model|Model[]|null
 	 */
 	public function getValue( callable $loader ) {
 		// If caching is disabled, always load fresh
 		if ( ! $this->definition->hasCachingEnabled() ) {
-			return $loader();
+			return $this->resolveValue( $loader() );
 		}
 
 		// If already loaded and caching is enabled, return cached value
@@ -98,9 +98,9 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable():( Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null ) $loader A callable that loads the relationship value.
+	 * @param callable():( Model|Model[]|LazyModelInterface|LazyModelInterface[]|null ) $loader A callable that loads the relationship value.
 	 *
-	 * @return Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null
+	 * @return Model|Model[]|LazyModelInterface|LazyModelInterface[]|null
 	 */
 	public function getRawValue( callable $loader ) {
 		$this->getValue( $loader );
@@ -113,17 +113,19 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null $value The value to resolve.
+	 * @param Model|Model[]|LazyModelInterface|LazyModelInterface[]|null $value The value to resolve.
 	 *
-	 * @return Model|list<Model>|null
+	 * @return Model|Model[]|null
 	 */
 	private function resolveValue( $value ) {
 		$callback = fn( $v ) => $v instanceof LazyModelInterface ? $v->resolve() : $v;
 
 		if ( is_array( $value ) ) {
+			/** @var Model[] */
 			return array_map( $callback, $value );
 		}
 
+		/** @var Model|null */
 		return $callback( $value );
 	}
 
@@ -151,7 +153,7 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param Model|list<Model>|null $value
+	 * @param Model|Model[]|LazyModelInterface|LazyModelInterface[]|null $value
 	 *
 	 * @throws InvalidArgumentException When the value is invalid.
 	 */

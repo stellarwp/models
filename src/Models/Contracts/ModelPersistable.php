@@ -14,25 +14,25 @@ interface ModelPersistable extends Model {
 	 *
 	 * @param int|string $id
 	 *
-	 * @return ?Model
+	 * @return ?ModelPersistable
 	 */
-	public static function find( $id ): ?Model;
+	public static function find( $id ): ?ModelPersistable;
 
 	/**
 	 * @since 1.0.0
 	 *
 	 * @param array<string,mixed> $attributes
 	 *
-	 * @return Model
+	 * @return ModelPersistable
 	 */
-	public static function create( array $attributes );
+	public static function create( array $attributes ): ModelPersistable;
 
 	/**
 	 * @since 1.0.0
 	 *
-	 * @return Model
+	 * @return ModelPersistable
 	 */
-	public function save(): Model;
+	public function save(): ModelPersistable;
 
 	/**
 	 * @since 1.0.0

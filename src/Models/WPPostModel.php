@@ -16,11 +16,11 @@ use StellarWP\Models\ModelQueryBuilder;
 use RuntimeException;
 
 /**
- * Post model.
+ * WP Post model.
  *
  * @package StellarWP\Models
  */
-class PostModel extends Model implements ModelPersistable {
+class WPPostModel extends Model implements ModelPersistable {
 	/**
 	 * A more robust, alternative way to define properties for the model than static::$properties.
 	 *
@@ -111,7 +111,18 @@ class PostModel extends Model implements ModelPersistable {
 	 * @return ?self
 	 */
 	public static function find( $id ): ?self {
-		return static::fromData( get_post( $id ) );
+		if ( ! function_exists( 'get_post' ) ) {
+			return null;
+		}
+
+		/** @var array<string,mixed> $post_array */
+		$post_array = get_post( $id, ARRAY_A ); // @phpstan-ignore-line It's ok to use ARRAY_A here. We have verified we are in a WordPress environment.
+
+		if ( empty( $post_array ) ) {
+			return null;
+		}
+
+		return static::fromData( $post_array );
 	}
 
 	/**
@@ -119,7 +130,7 @@ class PostModel extends Model implements ModelPersistable {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param array $attributes The attributes of the post.
+	 * @param array<string,mixed> $attributes The attributes of the post.
 	 *
 	 * @return self
 	 */
@@ -135,12 +146,18 @@ class PostModel extends Model implements ModelPersistable {
 	 * @since 2.0.0
 	 *
 	 * @return self
+	 *
+	 * @throws RuntimeException If the wp_insert_post function does not exist.
 	 */
 	public function save(): self {
+		if ( ! function_exists( 'wp_insert_post' ) ) {
+			throw new RuntimeException( 'This model needs to be used with WordPress. Function wp_insert_post does not exist.' );
+		}
+
 		$id = wp_insert_post( $this->toArray(), true );
 
-		if ( is_wp_error( $id ) ) {
-			throw new RuntimeException( $id->get_error_message() );
+		if ( is_wp_error( $id ) ) { // @phpstan-ignore-line It's ok to use wp_error here. We have verified we are in a WordPress environment.
+			throw new RuntimeException( $id->get_error_message() ); // @phpstan-ignore-line Same as above.
 		}
 
 		$this->setAttribute( 'ID', $id );
@@ -154,8 +171,14 @@ class PostModel extends Model implements ModelPersistable {
 	 * @since 2.0.0
 	 *
 	 * @return bool
+	 *
+	 * @throws RuntimeException If the wp_delete_post function does not exist.
 	 */
 	public function delete(): bool {
+		if ( ! function_exists( 'wp_delete_post' ) ) {
+			throw new RuntimeException( 'This model needs to be used with WordPress. Function wp_delete_post does not exist.' );
+		}
+
 		return (bool) wp_delete_post( $this->getAttribute( 'ID' ) );
 	}
 
@@ -164,7 +187,7 @@ class PostModel extends Model implements ModelPersistable {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @return ModelQueryBuilder<self>
+	 * @return ModelQueryBuilder<static>
 	 */
 	public static function query(): ModelQueryBuilder {
 		return new ModelQueryBuilder( static::class );

@@ -388,7 +388,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param string $key Relationship name.
 	 *
-	 * @return Model|list<Model>|null
+	 * @return Model|Model[]|null
 	 */
 	protected function fetchRelationship( string $key ) {
 		if ( ! $this->hasRelationshipMethod( $key ) ) {
@@ -402,7 +402,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 
 		if ( $definition->isMultiple() ) {
 			$result = $queryBuilder->getAll();
-			/** @var list<Model>|null $result */
+			/** @var Model[]|null $result */
 			return $result;
 		}
 
@@ -418,7 +418,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @param string $key Relationship name.
 	 *
-	 * @return Model|list<Model>|null
+	 * @return Model|Model[]|null
 	 */
 	protected function getRelationship( string $key ) {
 		return $this->relationshipCollection->getOrFail( $key )->getValue( fn() => $this->fetchRelationship( $key ) );
@@ -484,7 +484,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 2.0.0
 	 *
 	 * @param string $key Relationship name.
-	 * @param Model|list<Model>|LazyModelInterface|list<LazyModelInterface>|null $value The relationship value to cache.
+	 * @param Model|Model[]|LazyModelInterface|LazyModelInterface[]|null $value The relationship value to cache.
 	 *
 	 * @return void
 	 */
