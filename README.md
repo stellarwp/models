@@ -328,6 +328,173 @@ class Breakfast_Model extends Model {
 }
 ```
 
+## Model Relationships
+
+Models can define relationships to other models, similar to how properties are defined. Relationships support lazy loading and caching.
+
+### Defining Relationships
+
+Relationships can be defined using either shorthand syntax or the fluent `ModelRelationshipDefinition` API:
+
+#### Using shorthand syntax:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ValueObjects\Relationship;
+
+class Product_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static $relationships = [
+		'category' => Relationship::BELONGS_TO,
+		'reviews' => Relationship::HAS_MANY,
+		'tags' => Relationship::MANY_TO_MANY,
+	];
+
+	/**
+	 * Define how to load the category relationship.
+	 */
+	protected function category() {
+		return Category_Model::query()->where('id', $this->category_id);
+	}
+
+	/**
+	 * Define how to load the reviews relationship.
+	 */
+	protected function reviews() {
+		return Review_Model::query()->where('product_id', $this->id);
+	}
+
+	/**
+	 * Define how to load the tags relationship.
+	 */
+	protected function tags() {
+		return Tag_Model::query()
+			->select('tags.*')
+			->join('product_tags', 'product_tags.tag_id', 'tags.id')
+			->where('product_tags.product_id', $this->id);
+	}
+}
+```
+
+#### Using relationship definitions for more control:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelRelationshipDefinition;
+
+class Product_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static function relationships(): array {
+		return [
+			'category' => (new ModelRelationshipDefinition('category'))
+				->belongsTo(),
+			'reviews' => (new ModelRelationshipDefinition('reviews'))
+				->hasMany(),
+			'tags' => (new ModelRelationshipDefinition('tags'))
+				->manyToMany()
+				->disableCaching(), // Don't cache this relationship
+		];
+	}
+
+	// Define relationship loaders as above...
+}
+```
+
+### Relationship Types
+
+Five relationship types are available:
+
+- `Relationship::HAS_ONE` - Model has one related model
+- `Relationship::HAS_MANY` - Model has many related models
+- `Relationship::BELONGS_TO` - Model belongs to another model
+- `Relationship::BELONGS_TO_MANY` - Model belongs to many related models
+- `Relationship::MANY_TO_MANY` - Many-to-many relationship
+
+### Accessing Relationships
+
+Relationships are loaded lazily when accessed as properties:
+
+```php
+$product = Product_Model::find(1);
+
+// First access loads from database and caches result
+$category = $product->category;
+
+// Subsequent accesses use cached value (if caching enabled)
+$category = $product->category; // No additional query
+
+// Access multiple relationship
+$reviews = $product->reviews; // Returns array of Review_Model instances
+```
+
+### Relationship Caching
+
+By default, relationships are cached after the first load. You can control caching behavior:
+
+```php
+class Product_Model extends Model {
+	protected static function relationships(): array {
+		return [
+			// Cached (default)
+			'category' => (new ModelRelationshipDefinition('category'))
+				->belongsTo(),
+
+			// Not cached - always loads fresh
+			'stock' => (new ModelRelationshipDefinition('stock'))
+				->hasOne()
+				->disableCaching(),
+		];
+	}
+}
+```
+
+### Managing Relationship Cache
+
+Models provide methods to manage relationship caching:
+
+```php
+$product = Product_Model::find(1);
+
+// Manually set a cached relationship value
+$product->setCachedRelationship('category', $newCategory);
+
+// Clear a specific relationship cache
+$product->purgeRelationship('category');
+$category = $product->category; // Reloads from database
+
+// Clear all relationship caches
+$product->purgeRelationshipCache();
+```
+
+### Customizing Relationship Loading
+
+Override the `fetchRelationship()` method to customize how relationships are loaded:
+
+```php
+class Product_Model extends Model {
+	/**
+	 * Custom relationship loading logic.
+	 */
+	protected function fetchRelationship(string $key) {
+		// Add custom logic before loading
+		if ($key === 'category' && !$this->category_id) {
+			return null;
+		}
+
+		// Default loading behavior
+		return parent::fetchRelationship($key);
+	}
+}
+```
+
 ## Attribute validation
 
 Sometimes it would be helpful to validate attributes that are set in the model. To do that, you can create `validate_*()`

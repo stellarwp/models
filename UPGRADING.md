@@ -460,7 +460,87 @@ $product = Product_Model::query()->where('id', 1)->get();
 $products = Product_Model::query()->where('active', 1)->getAll();
 ```
 
-### 9. Relationship Cache Control
+### 9. Enhanced Relationship System
+
+The relationship system has been completely redesigned to work like the property system with better type safety and flexibility.
+
+#### Relationship Definitions
+
+You can now define relationships using `ModelRelationshipDefinition` for more control:
+
+```php
+use StellarWP\Models\ModelRelationshipDefinition;
+use StellarWP\Models\ValueObjects\Relationship;
+
+class Product_Model extends Model {
+    // Shorthand syntax (still supported)
+    protected static $relationships = [
+        'category' => Relationship::BELONGS_TO,
+        'reviews' => Relationship::HAS_MANY,
+    ];
+
+    // Or use the fluent API for more control
+    protected static function relationships(): array {
+        return [
+            'category' => (new ModelRelationshipDefinition('category'))
+                ->belongsTo(),
+            'reviews' => (new ModelRelationshipDefinition('reviews'))
+                ->hasMany()
+                ->disableCaching(), // Disable caching for this relationship
+            'tags' => (new ModelRelationshipDefinition('tags'))
+                ->manyToMany(),
+        ];
+    }
+
+    // Define relationship loaders
+    protected function category() {
+        return Category_Model::query()->where('id', $this->category_id);
+    }
+
+    protected function reviews() {
+        return Review_Model::query()->where('product_id', $this->id);
+    }
+
+    protected function tags() {
+        return Tag_Model::query()
+            ->join('product_tags', 'product_tags.tag_id', 'tags.id')
+            ->where('product_tags.product_id', $this->id);
+    }
+}
+```
+
+#### Relationship Type Value Object
+
+The `Relationship` class is now a proper value object with instance caching (flyweight pattern):
+
+```php
+use StellarWP\Models\ValueObjects\Relationship;
+
+// Factory methods return cached instances
+$hasMany1 = Relationship::HAS_MANY();
+$hasMany2 = Relationship::HAS_MANY();
+$hasMany1 === $hasMany2; // true - same instance
+
+// Create from string
+$relationship = Relationship::from('has-many');
+
+// Type checking methods
+$relationship->isHasMany(); // true
+$relationship->isSingle(); // false
+$relationship->isMultiple(); // true
+
+// Get all relationship types
+$all = Relationship::all(); // Returns array of all 5 relationship types
+```
+
+Available relationship types:
+- `Relationship::HAS_ONE` - Single related model
+- `Relationship::HAS_MANY` - Multiple related models
+- `Relationship::BELONGS_TO` - Single parent model
+- `Relationship::BELONGS_TO_MANY` - Multiple parent models
+- `Relationship::MANY_TO_MANY` - Many-to-many relationship
+
+#### Relationship Cache Control
 
 New protected methods for managing relationship caching within your model subclasses:
 
@@ -489,6 +569,15 @@ class Product_Model extends Model {
         // Clear all cached relationships
         $this->purgeRelationshipCache();
     }
+
+    // Override to customize relationship loading
+    protected function fetchRelationship(string $key) {
+        if ($key === 'category' && !$this->category_id) {
+            return null; // No category to load
+        }
+
+        return parent::fetchRelationship($key);
+    }
 }
 ```
 
@@ -496,6 +585,7 @@ Available methods:
 - `setCachedRelationship(string $key, $value)` - Manually set a cached relationship value
 - `purgeRelationship(string $key)` - Clear a specific relationship from cache
 - `purgeRelationshipCache()` - Clear all relationship caches
+- `fetchRelationship(string $key)` - Override to customize relationship loading logic
 
 ## Getting Help
 
