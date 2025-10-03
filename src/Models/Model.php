@@ -625,7 +625,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @return list<string>
 	 */
 	public static function propertyKeys() : array {
-		return array_keys( static::$properties );
+		return array_keys( array_merge( static::$properties, static::properties() ) );
 	}
 
 	/**
