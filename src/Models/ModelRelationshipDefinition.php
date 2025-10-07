@@ -116,6 +116,8 @@ class ModelRelationshipDefinition {
 	 * Get the callable to hydrate the relationship with.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return callable( mixed $value ): ( Model )
 	 */
 	public function getHydrateWith(): callable {
 		// By default, it returns whats given.

@@ -32,7 +32,7 @@ class ModelRelationship {
 	/**
 	 * The relationship value.
 	 *
-	 * @var Model|list<Model>|null
+	 * @var mixed
 	 */
 	private $value;
 
@@ -121,7 +121,7 @@ class ModelRelationship {
 		}
 
 		if ( is_array( $value ) ) {
-			return array_map( fn( $item ) => $this->definition->getHydrateWith()( $item ), $value );
+			return array_values( array_map( fn( $item ) => $this->definition->getHydrateWith()( $item ), $value ) );
 		}
 
 		return $this->definition->getHydrateWith()( $value );
