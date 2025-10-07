@@ -72,7 +72,7 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable():( mixed ) $loader A callable that loads the relationship value.
+	 * @param callable():( Model|list<Model>|null ) $loader A callable that loads the relationship value.
 	 *
 	 * @return Model|list<Model>|null
 	 */
@@ -97,7 +97,7 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable():( mixed ) $loader A callable that loads the relationship value.
+	 * @param callable():( Model|list<Model>|null ) $loader A callable that loads the relationship value.
 	 *
 	 * @return mixed
 	 */
