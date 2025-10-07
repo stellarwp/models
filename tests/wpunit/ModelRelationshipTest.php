@@ -234,7 +234,15 @@ class ModelRelationshipTest extends ModelsTestCase {
 			protected static function relationships(): array {
 				$definition = new ModelRelationshipDefinition('post', Relationship::HAS_ONE());
 				$definition->setHydrateWith( fn( int $post_id ) => get_post( $post_id ) );
-				$definition->setValidateRelationshipWith( fn( $post_or_post_id ) => get_post( $post_or_post_id ) instanceof WP_Post );
+				$definition->setValidateSanitizeRelationshipWith( function ( $post_or_post_id ) {
+					$p = get_post( $post_or_post_id );
+					if ( ! $p instanceof WP_Post ) {
+						throw new \InvalidArgumentException( 'Post must be a valid WP_Post object.' );
+					}
+
+					return $p->ID;
+				});
+
 				return [
 					'post' => $definition,
 				];
@@ -252,6 +260,13 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$myModel->setAttribute('id', 1);
 		$myModel->setCachedRelationship('post', $post_id);
 
+		$this->assertInstanceOf(WP_Post::class, $myModel->post);
+		$this->assertEquals($post_id, $myModel->post->ID);
+
+		$myModel->setCachedRelationship('post', null);
+		$this->assertNull($myModel->post);
+
+		$myModel->setCachedRelationship('post', get_post($post_id));
 		$this->assertInstanceOf(WP_Post::class, $myModel->post);
 		$this->assertEquals($post_id, $myModel->post->ID);
 	}

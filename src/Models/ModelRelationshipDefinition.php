@@ -33,13 +33,13 @@ class ModelRelationshipDefinition {
 	private $hydrateWith = null;
 
 	/**
-	 * The callable to validate the relationship with.
+	 * The callable to validate and sanitize the relationship with.
 	 *
 	 * @since 2.0.0
 	 *
 	 * @var ?callable
 	 */
-	private $validateRelationshipWith = null;
+	private $validateSanitizeRelationshipWith = null;
 
 	/**
 	 * Whether the definition is locked. Once locked, the definition cannot be changed.
@@ -129,12 +129,12 @@ class ModelRelationshipDefinition {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param callable $validateRelationshipWith The callable to validate the relationship with.
+	 * @param callable $validateSanitizeRelationshipWith The callable to validate the relationship with.
 	 */
-	public function setValidateRelationshipWith( callable $validateRelationshipWith ): self {
+	public function setValidateSanitizeRelationshipWith( callable $validateSanitizeRelationshipWith ): self {
 		$this->checkLock();
 
-		$this->validateRelationshipWith = $validateRelationshipWith;
+		$this->validateSanitizeRelationshipWith = $validateSanitizeRelationshipWith;
 
 		return $this;
 	}
@@ -143,10 +143,18 @@ class ModelRelationshipDefinition {
 	 * Get the callable to validate the relationship with.
 	 *
 	 * @since 2.0.0
+	 *
+	 * @return callable( mixed $thing ): ( Model | null )
 	 */
 
-	public function getValidateRelationshipWith(): callable {
-		return $this->validateRelationshipWith ?? fn( $thing ): bool => null === $thing || $thing instanceof Model;
+	public function getValidateSanitizeRelationshipWith(): callable {
+		return $this->validateSanitizeRelationshipWith ?? function( $thing ): ?Model {
+			if ( null !== $thing && ! $thing instanceof Model ) {
+				throw new InvalidArgumentException( 'Relationship value must be a valid value.' );
+			}
+
+			return $thing;
+		};
 	}
 
 	/**

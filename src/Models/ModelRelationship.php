@@ -159,22 +159,17 @@ class ModelRelationship {
 	 */
 	public function setValue( $value ): self {
 		if ( $value !== null ) {
-			if ( $this->definition->isSingle() && ! $this->definition->getValidateRelationshipWith()( $value ) ) {
-				throw new InvalidArgumentException( 'Relationship value must be a valid value.' );
+			if ( $this->definition->isSingle() ) {
+				$value = $this->definition->getValidateSanitizeRelationshipWith()( $value );
 			}
 
 			if ( $this->definition->isMultiple() ) {
 				if ( ! is_array( $value ) ) {
-					throw new InvalidArgumentException( 'Multiple relationship value must be an array or null.' );
+					Config::throwInvalidArgumentException( 'Multiple relationship value must be an array or null.' );
 				}
 
-				foreach ( $value as $item ) {
-					if ( $this->definition->getValidateRelationshipWith()( $item ) ) {
-						continue;
-					}
-
-					throw new InvalidArgumentException( 'Multiple relationship value must be an array of valid values.' );
-				}
+				$sanitizer = $this->definition->getValidateSanitizeRelationshipWith();
+				$value = array_map( $sanitizer, $value );
 			}
 		}
 

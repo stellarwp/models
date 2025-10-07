@@ -484,7 +484,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 * @since 2.0.0
 	 *
 	 * @param string $key Relationship name.
-	 * @param mixed $value The relationship value to cache.
+	 * @param Model|list<Model>|null $value The relationship value to cache.
 	 *
 	 * @return void
 	 */
