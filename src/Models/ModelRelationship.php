@@ -120,11 +120,13 @@ class ModelRelationship {
 			return null;
 		}
 
+		$hydrator = $this->definition->getHydrateWith();
+
 		if ( is_array( $value ) ) {
-			return array_values( array_map( fn( $item ) => $this->definition->getHydrateWith()( $item ), $value ) );
+			return array_values( array_map( fn( $item ) => $hydrator( $item ), $value ) );
 		}
 
-		return $this->definition->getHydrateWith()( $value );
+		return $hydrator( $value );
 	}
 
 	/**
