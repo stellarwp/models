@@ -24,6 +24,24 @@ class ModelRelationshipDefinition {
 	private bool $cachingEnabled = true;
 
 	/**
+	 * The callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var ?callable
+	 */
+	private $hydrateWith = null;
+
+	/**
+	 * The callable to validate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var ?callable
+	 */
+	private $validateRelationshipWith = null;
+
+	/**
 	 * Whether the definition is locked. Once locked, the definition cannot be changed.
 	 *
 	 * @since 2.0.0
@@ -77,6 +95,56 @@ class ModelRelationshipDefinition {
 		$this->type = Relationship::BELONGS_TO();
 
 		return $this;
+	}
+
+	/**
+	 * Set the callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable $hydrateWith The callable to hydrate the relationship with.
+	 */
+	public function setHydrateWith( callable $hydrateWith ): self {
+		$this->checkLock();
+
+		$this->hydrateWith = $hydrateWith;
+
+		return $this;
+	}
+
+	/**
+	 * Get the callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 */
+	public function getHydrateWith(): callable {
+		// By default, it returns whats given.
+		return $this->hydrateWith ?? fn( $value ) => $value;
+	}
+
+	/**
+	 * Set the callable to validate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable $validateRelationshipWith The callable to validate the relationship with.
+	 */
+	public function setValidateRelationshipWith( callable $validateRelationshipWith ): self {
+		$this->checkLock();
+
+		$this->validateRelationshipWith = $validateRelationshipWith;
+
+		return $this;
+	}
+
+	/**
+	 * Get the callable to validate the relationship with.
+	 *
+	 * @since 2.0.0
+	 */
+
+	public function getValidateRelationshipWith(): callable {
+		return $this->validateRelationshipWith ?? fn( $thing ): bool => null === $thing || $thing instanceof Model;
 	}
 
 	/**
