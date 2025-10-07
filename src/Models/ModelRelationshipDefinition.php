@@ -121,7 +121,7 @@ class ModelRelationshipDefinition {
 	 */
 	public function getHydrateWith(): callable {
 		// By default, it returns whats given.
-		return $this->hydrateWith ?? fn( $value ) => $value;
+		return $this->hydrateWith ?? static fn( $value ) => $value;
 	}
 
 	/**
