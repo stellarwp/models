@@ -66,7 +66,7 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$relationship = new ModelRelationship('post', $definition);
 
 		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('Single relationship value must be a Model instance or null.');
+		$this->expectExceptionMessage('Relationship value must be a valid value.');
 
 		$relationship->setValue('invalid');
 	}
@@ -96,7 +96,7 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$relationship = new ModelRelationship('posts', $definition);
 
 		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('Multiple relationship value must be an array of Model instances.');
+		$this->expectExceptionMessage('Multiple relationship value must be an array of valid values.');
 
 		$relationship->setValue(['not', 'models']);
 	}
