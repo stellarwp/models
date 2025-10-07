@@ -148,7 +148,7 @@ class ModelRelationshipDefinition {
 	 */
 
 	public function getValidateSanitizeRelationshipWith(): callable {
-		return $this->validateSanitizeRelationshipWith ?? function( $thing ): ?Model {
+		return $this->validateSanitizeRelationshipWith ?? static function( $thing ): ?Model {
 			if ( null !== $thing && ! $thing instanceof Model ) {
 				throw new InvalidArgumentException( 'Relationship value must be a valid value.' );
 			}
