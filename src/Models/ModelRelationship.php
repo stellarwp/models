@@ -153,7 +153,7 @@ class ModelRelationship {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param mixed $value
+	 * @param Model|list<Model>|null $value
 	 *
 	 * @throws InvalidArgumentException When the value is invalid.
 	 */
