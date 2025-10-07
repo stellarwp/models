@@ -8,17 +8,15 @@ A library for a simple model structure.
 * [Configuration](#configuration)
 * [Creating a model](#creating-a-model)
 * [Interacting with a model](#interacting-with-a-model)
+* [Attribute validation](#attribute-validation)
 * [Data transfer objects](#data-transfer-objects)
 * [Classes of note](#classes-of-note)
   * [Model](#model)
-  * [ModelFactory](#modelfactory)
   * [ModelQueryBuilder](#modelquerybuilder)
   * [DataTransferObject](#data-transfer-objects)
   * [Repositories\Repository](#repositoriesrepository)
 * [Contracts of note](#contracts-of-note)
-  * [Contracts\ModelCrud](#contractsmodelcrud)
-  * [Contracts\ModelHasFactory](#contractsmodelhasfactory)
-  * [Contracts\ModelReadOnly](#contractsmodelreadonly)
+  * [Contracts\ModelPersistable](#contractsmodelpersistable)
   * [Repositories\Contracts\Deletable](#repositoriescontractsdeletable)
   * [Repositories\Contracts\Insertable](#repositoriescontractsinsertable)
   * [Repositories\Contracts\Updatable](#repositoriescontractsupdatable)
@@ -57,7 +55,9 @@ Models are classes that hold data and provide some helper methods for interactin
 
 ### A simple model
 
-This is an example of a model that just holds properties.
+This is an example of a model that just holds properties. Properties can be defined in one or both of the following ways:
+
+#### Using the shorthand syntax:
 
 ```php
 namespace Boomshakalaka\Whatever;
@@ -68,9 +68,9 @@ class Breakfast_Model extends Model {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
-		'name'      => 'string',
+		'name'      => ['string', 'Default Name'], // With default value
 		'price'     => 'float',
 		'num_eggs'  => 'int',
 		'has_bacon' => 'bool',
@@ -78,11 +78,50 @@ class Breakfast_Model extends Model {
 }
 ```
 
-### A ReadOnly model
+#### Using property definitions for more control:
 
-This is a model whose intent is to only read and store data. The Read operations should - in most cases - be deferred to
-a repository class, but the model should provide a simple interface for interacting with the repository. You can create
-ReadOnly model by implementing the `Contracts\ModelReadOnly` contract.
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelPropertyDefinition;
+
+class Breakfast_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static function properties(): array {
+		return [
+			'id' => ModelPropertyDefinition::create()
+				->type('int')
+				->required()
+			'name' => ModelPropertyDefinition::create()
+				->type('string')
+				->default('Default Name')
+				->nullable(),
+			'price' => ModelPropertyDefinition::create()
+				->type('float')
+				->requiredOnSave(),
+		];
+	}
+}
+```
+
+#### Property definition options:
+
+- `type(string ...$types)` - Set one or more types (int, string, bool, float, array, or class names)
+- `default($value)` - Set a default value (can be a closure)
+- `nullable()` - Allow null values
+- `required()` - Property must be provided during construction
+- `requiredOnSave()` - Property must be set before saving
+- `readonly()` - Property can only be set during construction, cannot be modified afterward
+- `castWith(callable $callback)` - Custom casting function for the property value
+
+### A persistable model
+
+This is a model that includes persistence operations (create, find, save, delete). Ideally, the actual persistence operations should be deferred to and handled by
+a repository class, but the model should provide a simple interface for interacting with the repository. We get a persistable
+model by implementing the `Contracts\ModelPersistable` contract.
 
 ```php
 namespace Boomshakalaka\Whatever;
@@ -91,52 +130,11 @@ use Boomshakalaka\StellarWP\Models\Contracts;
 use Boomshakalaka\StellarWP\Models\Model;
 use Boomshakalaka\StellarWP\Models\ModelQueryBuilder;
 
-class Breakfast_Model extends Model implements Contracts\ModelReadOnly {
+class Breakfast_Model extends Model implements Contracts\ModelPersistable {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
-		'id'        => 'int',
-		'name'      => 'string',
-		'price'     => 'float',
-		'num_eggs'  => 'int',
-		'has_bacon' => 'bool',
-	];
-
-	/**
-	 * @inheritDoc
-	 */
-	public static function find( $id ) : Model {
-		return App::get( Repository::class )->get_by_id( $id );
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public static function query() : ModelQueryBuilder {
-		return App::get( Repository::class )->prepare_query();
-	}
-}
-```
-
-### A CRUD model
-
-This is a model that includes CRUD operations. Ideally, the actual CRUD operations should be deferred to and handled by
-a repository class, but the model should provide a simple interface for interacting with the repository. We get a CRUD
-model by implementing the `Contracts\ModelCrud` contract.
-
-```php
-namespace Boomshakalaka\Whatever;
-
-use Boomshakalaka\StellarWP\Models\Contracts;
-use Boomshakalaka\StellarWP\Models\Model;
-use Boomshakalaka\StellarWP\Models\ModelQueryBuilder;
-
-class Breakfast_Model extends Model implements Contracts\ModelCrud {
-	/**
-	 * @inheritDoc
-	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
@@ -183,6 +181,320 @@ class Breakfast_Model extends Model implements Contracts\ModelCrud {
 }
 ```
 
+## Interacting with a model
+
+### Change tracking
+
+Models track changes to their properties and provide methods to manage those changes:
+
+```php
+$breakfast = new Breakfast_Model([
+	'name' => 'Original Name',
+	'price' => 5.99,
+]);
+
+// Check if a property is dirty (changed)
+$breakfast->setAttribute('name', 'New Name');
+if ($breakfast->isDirty('name')) {
+	echo 'Name has changed!';
+}
+
+// Get all dirty values
+$dirtyValues = $breakfast->getDirty(); // ['name' => 'New Name']
+
+// Commit changes (makes current values the "original")
+$breakfast->commitChanges();
+// or use the alias:
+$breakfast->syncOriginal();
+
+// Revert a specific property change
+$breakfast->setAttribute('price', 7.99);
+$breakfast->revertChange('price'); // price is back to 5.99
+
+// Revert all changes
+$breakfast->setAttribute('name', 'Another Name');
+$breakfast->setAttribute('price', 8.99);
+$breakfast->revertChanges(); // All properties back to original
+
+// Get original value
+$originalName = $breakfast->getOriginal('name');
+$allOriginal = $breakfast->getOriginal(); // Get all original values
+```
+
+### Checking if properties are set
+
+The `isSet()` method checks if a property has been set. This is different from PHP's `isset()` because it considers `null` values and default values as "set":
+
+```php
+$breakfast = new Breakfast_Model();
+
+// Properties with defaults are considered set
+if ($breakfast->isSet('name')) { // true if 'name' has a default value
+    echo 'Name is set';
+}
+
+// Properties without defaults are not set until assigned
+if (!$breakfast->isSet('price')) { // false - no default and not assigned
+    echo 'Price is not set';
+}
+
+// Setting a property to null still counts as set
+$breakfast->setAttribute('price', null);
+if ($breakfast->isSet('price')) { // true - explicitly set to null
+    echo 'Price is set (even though it\'s null)';
+}
+
+// PHP's isset() behaves differently with null
+if (!isset($breakfast->price)) { // false - isset() returns false for null
+    echo 'PHP isset() returns false for null values';
+}
+```
+
+**Key differences from PHP's `isset()`:**
+- `isSet()` returns `true` for properties with default values
+- `isSet()` returns `true` for properties explicitly set to `null`
+- `isSet()` returns `false` only for properties that have no default and haven't been assigned
+
+### Creating models from query data
+
+Models can be created from database query results using the `fromData()` method:
+
+```php
+// From an object or array
+$data = DB::get_row("SELECT * FROM breakfasts WHERE id = 1");
+$breakfast = Breakfast_Model::fromData($data);
+
+// With different build modes
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_STRICT);
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_IGNORE_MISSING);
+$breakfast = Breakfast_Model::fromData($data, Breakfast_Model::BUILD_MODE_IGNORE_EXTRA);
+```
+
+Build modes:
+- `BUILD_MODE_STRICT`: Throws exceptions for missing or extra properties
+- `BUILD_MODE_IGNORE_MISSING`: Ignores properties missing from the data
+- `BUILD_MODE_IGNORE_EXTRA`: Ignores extra properties in the data (default)
+
+### Readonly properties
+
+Properties marked as `readonly()` can only be set during construction and cannot be modified afterward:
+
+```php
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelPropertyDefinition;
+
+class User_Model extends Model {
+	protected static function properties(): array {
+		return [
+			'id' => ModelPropertyDefinition::create()
+				->type('int')
+				->readonly(), // Can only be set during construction
+			'email' => ModelPropertyDefinition::create()
+				->type('string'),
+		];
+	}
+}
+
+// Set readonly property during construction
+$user = new User_Model(['id' => 1, 'email' => 'user@example.com']);
+
+// This works fine
+$user->setAttribute('email', 'newemail@example.com');
+
+// This throws ReadOnlyPropertyException
+$user->setAttribute('id', 2); // Error: Cannot modify readonly property "id"
+
+// This also throws ReadOnlyPropertyException
+unset($user->id); // Error: Cannot unset readonly property "id"
+```
+
+Readonly properties are useful for:
+- Primary keys that shouldn't change after creation
+- Timestamps that are set once
+- Any immutable identifiers or values
+
+### Extending model construction
+
+Models can perform custom initialization after construction by overriding the `afterConstruct()` method:
+
+```php
+class Breakfast_Model extends Model {
+	protected function afterConstruct() {
+		// Perform custom initialization
+		if ($this->has_bacon && $this->num_eggs > 2) {
+			$this->setAttribute('name', $this->name . ' (Hearty!)');
+		}
+	}
+}
+```
+
+## Model Relationships
+
+Models can define relationships to other models, similar to how properties are defined. Relationships support lazy loading and caching.
+
+### Defining Relationships
+
+Relationships can be defined using either shorthand syntax or the fluent `ModelRelationshipDefinition` API:
+
+#### Using shorthand syntax:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ValueObjects\Relationship;
+
+class Product_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static $relationships = [
+		'category' => Relationship::BELONGS_TO,
+		'reviews' => Relationship::HAS_MANY,
+		'tags' => Relationship::MANY_TO_MANY,
+	];
+
+	/**
+	 * Define how to load the category relationship.
+	 */
+	protected function category() {
+		return Category_Model::query()->where('id', $this->category_id);
+	}
+
+	/**
+	 * Define how to load the reviews relationship.
+	 */
+	protected function reviews() {
+		return Review_Model::query()->where('product_id', $this->id);
+	}
+
+	/**
+	 * Define how to load the tags relationship.
+	 */
+	protected function tags() {
+		return Tag_Model::query()
+			->select('tags.*')
+			->join('product_tags', 'product_tags.tag_id', 'tags.id')
+			->where('product_tags.product_id', $this->id);
+	}
+}
+```
+
+#### Using relationship definitions for more control:
+
+```php
+namespace Boomshakalaka\Whatever;
+
+use Boomshakalaka\StellarWP\Models\Model;
+use Boomshakalaka\StellarWP\Models\ModelRelationshipDefinition;
+
+class Product_Model extends Model {
+	/**
+	 * @inheritDoc
+	 */
+	protected static function relationships(): array {
+		return [
+			'category' => (new ModelRelationshipDefinition('category'))
+				->belongsTo(),
+			'reviews' => (new ModelRelationshipDefinition('reviews'))
+				->hasMany(),
+			'tags' => (new ModelRelationshipDefinition('tags'))
+				->manyToMany()
+				->disableCaching(), // Don't cache this relationship
+		];
+	}
+
+	// Define relationship loaders as above...
+}
+```
+
+### Relationship Types
+
+Five relationship types are available:
+
+- `Relationship::HAS_ONE` - Model has one related model
+- `Relationship::HAS_MANY` - Model has many related models
+- `Relationship::BELONGS_TO` - Model belongs to another model
+- `Relationship::BELONGS_TO_MANY` - Model belongs to many related models
+- `Relationship::MANY_TO_MANY` - Many-to-many relationship
+
+### Accessing Relationships
+
+Relationships are loaded lazily when accessed as properties:
+
+```php
+$product = Product_Model::find(1);
+
+// First access loads from database and caches result
+$category = $product->category;
+
+// Subsequent accesses use cached value (if caching enabled)
+$category = $product->category; // No additional query
+
+// Access multiple relationship
+$reviews = $product->reviews; // Returns array of Review_Model instances
+```
+
+### Relationship Caching
+
+By default, relationships are cached after the first load. You can control caching behavior:
+
+```php
+class Product_Model extends Model {
+	protected static function relationships(): array {
+		return [
+			// Cached (default)
+			'category' => (new ModelRelationshipDefinition('category'))
+				->belongsTo(),
+
+			// Not cached - always loads fresh
+			'stock' => (new ModelRelationshipDefinition('stock'))
+				->hasOne()
+				->disableCaching(),
+		];
+	}
+}
+```
+
+### Managing Relationship Cache
+
+Models provide methods to manage relationship caching:
+
+```php
+$product = Product_Model::find(1);
+
+// Manually set a cached relationship value
+$product->setCachedRelationship('category', $newCategory);
+
+// Clear a specific relationship cache
+$product->purgeRelationship('category');
+$category = $product->category; // Reloads from database
+
+// Clear all relationship caches
+$product->purgeRelationshipCache();
+```
+
+### Customizing Relationship Loading
+
+Override the `fetchRelationship()` method to customize how relationships are loaded:
+
+```php
+class Product_Model extends Model {
+	/**
+	 * Custom relationship loading logic.
+	 */
+	protected function fetchRelationship(string $key) {
+		// Add custom logic before loading
+		if ($key === 'category' && !$this->category_id) {
+			return null;
+		}
+
+		// Default loading behavior
+		return parent::fetchRelationship($key);
+	}
+}
+```
+
 ## Attribute validation
 
 Sometimes it would be helpful to validate attributes that are set in the model. To do that, you can create `validate_*()`
@@ -199,7 +511,7 @@ class Breakfast_Model extends Model {
 	/**
 	 * @inheritDoc
 	 */
-	protected $properties = [
+	protected static $properties = [
 		'id'        => 'int',
 		'name'      => 'string',
 		'price'     => 'float',
@@ -442,21 +754,23 @@ $breakfast = Breakfast_Model::find( 1 );
 $breakfast->delete();
 ```
 
+### Unsetting properties
+
+```php
+$breakfast = Breakfast_Model::find( 1 );
+unset($breakfast->price); // Unsets the price property
+```
+
 ## Classes of note
 
 ### `Model`
 
 This is an abstract class to extend for your models.
 
-### `ModelFactory`
-
-This is an abstract class to extend for creating model factories.
-
 ### `ModelQueryBuilder`
 
 This class extends the [`stellarwp/db`](https://github.com/stellarwp/db) `QueryBuilder` class so that it returns
-model instances rather than arrays or `stdClass` instances. Using this requires models that implement the `ModelFromQueryBuilderObject`
-interface.
+model instances rather than arrays or `stdClass` instances.
 
 ### `DataTransferObject`
 
@@ -468,17 +782,9 @@ This is an abstract class to extend for your repositories.
 
 ## Contracts of note
 
-### `Contracts\ModelCrud`
+### `Contracts\ModelPersistable`
 
-Provides definitions of methods for CRUD operations in a model.
-
-### `Contracts\ModelHasFactory`
-
-Provides definition for factory methods within a model.
-
-### `Contracts\ModelReadOnly`
-
-Provides method signatures for read operations in a model.
+Provides definitions of methods for persistence operations in a model (create, find, save, delete, query).
 
 ### `Repositories\Contracts\Deletable`
 

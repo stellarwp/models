@@ -14,7 +14,7 @@
   "config": {
     "preferred-install": "dist",
     "platform": {
-      "php": "7.0"
+      "php": "7.4"
     },
     "allow-plugins": {
       "kylekatarnls/update-helper": true
@@ -33,7 +33,8 @@
     "codeception/module-webdriver": "^1.0",
     "codeception/util-universalframework": "^1.0",
     "lucatume/wp-browser": "^3.0.14",
-    "phpunit/phpunit": "~6.0"
+    "phpunit/phpunit": "~6.0",
+    "phpstan/phpstan": "^2.1"
   },
   "autoload": {
     "psr-4": {
@@ -44,5 +45,8 @@
     "psr-4": {
       "StellarWP\\Models\\Tests\\": "tests/_support/Helper/"
     }
+  },
+  "scripts": {
+    "phpstan": "phpstan analyze --memory-limit=512M"
   }
 }

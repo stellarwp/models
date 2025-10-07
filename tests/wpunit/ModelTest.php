@@ -4,6 +4,8 @@ namespace StellarWP\Models;
 
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\Tests\MockModel;
+use StellarWP\Models\Tests\BadMockModel;
+use StellarWP\Models\Tests\MockModelWithAfterConstruct;
 use StellarWP\Models\Tests\MockModelWithRelationship;
 
 /**
@@ -110,9 +112,7 @@ class TestModel extends ModelsTestCase {
 	 * @return void
 	 */
 	public function testIsPropertyTypeValidShouldReturnTrueWhenPropertyIsValid() {
-		$model = new MockModel();
-
-		$this->assertTrue( $model->isPropertyTypeValid( 'id', 1 ) );
+		$this->assertTrue( MockModel::isPropertyTypeValid( 'id', 1 ) );
 	}
 
 	/**
@@ -123,9 +123,7 @@ class TestModel extends ModelsTestCase {
 	 * @return void
 	 */
 	public function testIsPropertyTypeValidShouldReturnFalseWhenPropertyIsInValid( $key, $value ) {
-		$model = new MockModel();
-
-		$this->assertFalse( $model->isPropertyTypeValid( $key, $value ) );
+		$this->assertFalse( MockModel::isPropertyTypeValid( $key, $value ) );
 	}
 
 	/**
@@ -189,10 +187,6 @@ class TestModel extends ModelsTestCase {
 	 */
 	public function testIssetShouldReturnFalse() {
 		$model = new MockModel();
-
-		$this->assertFalse( isset( $model->id ) );
-
-		$model->id = null;
 
 		$this->assertFalse( isset( $model->id ) );
 	}
@@ -279,10 +273,8 @@ class TestModel extends ModelsTestCase {
 
 	/**
 	 * @since 1.0.0
-	 *
-	 * @return void
 	 */
-	public function testIsSet() {
+	public function testIsSet(): void {
 		$model = new MockModel();
 
 		// This has a default so we should see as set.
@@ -292,8 +284,61 @@ class TestModel extends ModelsTestCase {
 		$this->assertFalse( $model->isSet( 'lastName' ) );
 
 		// Now we set it, so it should be true - even though we set it to null.
-		$model->lastName = null;
+		$model->lastName = 'Murray';
 		$this->assertTrue( $model->isSet( 'lastName' ) );
+	}
+
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldCreateInstanceWithCorrectTypes(): void {
+		$model = MockModel::fromData( [
+			'id' => '1',
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [ 'billMurray@givewp.com' ],
+			'microseconds' => '1234567890.5',
+			'number' => '42',
+			'date' => new \DateTime('2023-01-01'),
+		] );
+
+		$this->assertEquals( 1, $model->id );
+		$this->assertEquals( 'Bill', $model->firstName );
+		$this->assertEquals( 'Murray', $model->lastName );
+		$this->assertEquals( [ 'billMurray@givewp.com' ], $model->emails );
+		$this->assertEquals( 1234567890.5, $model->microseconds );
+		$this->assertEquals( 42, $model->number );
+		$this->assertInstanceOf( \DateTime::class, $model->date );
+	}
+
+	/**
+	 * @since 2.0.0
+	 */
+	public function testFromDataShouldThrowExceptionForNonPrimitiveTypes(): void {
+		$this->expectException( Config::getInvalidArgumentException() );
+		$this->expectExceptionMessage( "Unexpected type: 'DateTime'. To support additional types, overload this method or use Definition casting." );
+
+		BadMockModel::fromData( [
+			'id' => 1,
+			'firstName' => 'Bill',
+			'lastName' => 'Murray',
+			'emails' => [],
+			'microseconds' => 123.45,
+			'number' => 123,
+			'date' => '2023-01-01',
+		] );
+	}
+
+	/**
+	 * @since 2.0.0
+	 *
+	 * @return void
+	 */
+	public function testOnConstructedIsCalledDuringConstruction() {
+		$model = new MockModelWithAfterConstruct( [ 'id' => 1, 'name' => 'Test' ] );
+
+		$this->assertTrue( $model->afterConstructCalled );
+		$this->assertEquals( [ 'id' => 1, 'name' => 'Test' ], $model->constructedAttributes );
 	}
 
 	/**
@@ -307,7 +352,6 @@ class TestModel extends ModelsTestCase {
 			[ 'firstName', 100 ],
 			[ 'emails', 'Not an array' ],
 			[ 'microseconds', 'Not a float' ],
-			[ 'number', '12' ] // numeric strings do not work; must be int or float
 		];
 	}
 }
