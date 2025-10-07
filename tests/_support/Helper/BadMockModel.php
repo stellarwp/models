@@ -3,10 +3,9 @@
 namespace StellarWP\Models\Tests;
 
 use StellarWP\Models\Model;
-use StellarWP\Models\ModelPropertyDefinition;
 use DateTime;
 
-class MockModel extends Model {
+class BadMockModel extends Model {
 	protected static array $properties = [
 		'id'           => 'int',
 		'firstName'    => [ 'string', 'Michael' ],
@@ -14,15 +13,6 @@ class MockModel extends Model {
 		'emails'       => [ 'array', [] ],
 		'microseconds' => 'float',
 		'number'       => 'int',
+		'date'         => DateTime::class,
 	];
-
-	protected static function properties(): array {
-		return [
-			'date' => ( new ModelPropertyDefinition() )
-				->type('object')
-				->castWith(
-					fn($value) => DateTime::createFromFormat('Y-m-d H:i:s', $value)
-				),
-		];
-	}
 }

@@ -15,9 +15,9 @@ interface ModelPersistable extends Model {
 	 *
 	 * @param int $id
 	 *
-	 * @return Model
+	 * @return ?Model
 	 */
-	public static function find( $id ): Model;
+	public static function find( $id ): ?Model;
 
 	/**
 	 * @since 1.0.0

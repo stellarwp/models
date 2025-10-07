@@ -5,8 +5,10 @@ namespace StellarWP\Models\Tests\Unit;
 use StellarWP\Models\Model;
 use StellarWP\Models\ModelRelationship;
 use StellarWP\Models\ModelRelationshipDefinition;
+use StellarWP\Models\ModelPropertyDefinition;
 use StellarWP\Models\Tests\ModelsTestCase;
 use StellarWP\Models\ValueObjects\Relationship;
+use WP_Post;
 
 /**
  * @coversDefaultClass \StellarWP\Models\ModelRelationship
@@ -66,7 +68,7 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$relationship = new ModelRelationship('post', $definition);
 
 		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('Single relationship value must be a Model instance or null.');
+		$this->expectExceptionMessage('Relationship value must be a valid value.');
 
 		$relationship->setValue('invalid');
 	}
@@ -96,7 +98,7 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$relationship = new ModelRelationship('posts', $definition);
 
 		$this->expectException(\InvalidArgumentException::class);
-		$this->expectExceptionMessage('Multiple relationship value must be an array of Model instances.');
+		$this->expectExceptionMessage('Relationship value must be a valid value.');
 
 		$relationship->setValue(['not', 'models']);
 	}
@@ -219,5 +221,53 @@ class ModelRelationshipTest extends ModelsTestCase {
 		$this->assertTrue($relationship->isLoaded());
 		$loader = fn() => $this->fail('Loader should not be called');
 		$this->assertNull($relationship->getValue($loader));
+	}
+
+	public function testSetValueWithRawValue() {
+		$myModel = new class() extends Model {
+			protected static function properties(): array {
+				return [
+					'id' => (new ModelPropertyDefinition() )->type('int')->required(),
+				];
+			}
+
+			protected static function relationships(): array {
+				$definition = new ModelRelationshipDefinition('post', Relationship::HAS_ONE());
+				$definition->setHydrateWith( fn( int $post_id ) => get_post( $post_id ) );
+				$definition->setValidateSanitizeRelationshipWith( function ( $post_or_post_id ) {
+					$p = get_post( $post_or_post_id );
+					if ( ! $p instanceof WP_Post ) {
+						throw new \InvalidArgumentException( 'Post must be a valid WP_Post object.' );
+					}
+
+					return $p->ID;
+				});
+
+				return [
+					'post' => $definition,
+				];
+			}
+		};
+
+		$post_id = wp_insert_post([
+			'post_title' => 'Test Post',
+			'post_content' => 'Test Content',
+			'post_status' => 'publish',
+		]);
+
+		$this->assertIsInt($post_id);
+
+		$myModel->setAttribute('id', 1);
+		$myModel->setCachedRelationship('post', $post_id);
+
+		$this->assertInstanceOf(WP_Post::class, $myModel->post);
+		$this->assertEquals($post_id, $myModel->post->ID);
+
+		$myModel->setCachedRelationship('post', null);
+		$this->assertNull($myModel->post);
+
+		$myModel->setCachedRelationship('post', get_post($post_id));
+		$this->assertInstanceOf(WP_Post::class, $myModel->post);
+		$this->assertEquals($post_id, $myModel->post->ID);
 	}
 }

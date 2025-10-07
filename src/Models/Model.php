@@ -488,7 +488,7 @@ abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
 	 *
 	 * @return void
 	 */
-	protected function setCachedRelationship( string $key, $value ): void {
+	public function setCachedRelationship( string $key, $value ): void {
 		$relationship = $this->relationshipCollection->get( $key );
 
 		if ( ! $relationship ) {

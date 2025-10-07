@@ -32,7 +32,7 @@ class ModelRelationship {
 	/**
 	 * The relationship value.
 	 *
-	 * @var Model|list<Model>|null
+	 * @var mixed
 	 */
 	private $value;
 
@@ -79,17 +79,54 @@ class ModelRelationship {
 	public function getValue( callable $loader ) {
 		// If caching is disabled, always load fresh
 		if ( ! $this->definition->hasCachingEnabled() ) {
-			return $loader();
+			return $this->hydrate( $loader() );
 		}
 
 		// If already loaded and caching is enabled, return cached value
 		if ( $this->isLoaded ) {
-			return $this->value;
+			return $this->hydrate( $this->value );
 		}
 
 		// Load and cache the value
 		$this->setValue( $loader() );
+		return $this->hydrate( $this->value );
+	}
+
+	/**
+	 * Get the raw value of the relationship.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable():( Model|list<Model>|null ) $loader A callable that loads the relationship value.
+	 *
+	 * @return mixed
+	 */
+	public function getRawValue( callable $loader ) {
+		$this->getValue( $loader );
 		return $this->value;
+	}
+
+	/**
+	 * Hydrate the relationship value.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param mixed $value The relationship value.
+	 *
+	 * @return Model|list<Model>|null
+	 */
+	private function hydrate( $value ) {
+		if ( null === $value ) {
+			return null;
+		}
+
+		$hydrator = $this->definition->getHydrateWith();
+
+		if ( is_array( $value ) ) {
+			return array_values( array_map( fn( $item ) => $hydrator( $item ), $value ) );
+		}
+
+		return $hydrator( $value );
 	}
 
 	/**
@@ -121,22 +158,18 @@ class ModelRelationship {
 	 * @throws InvalidArgumentException When the value is invalid.
 	 */
 	public function setValue( $value ): self {
-		// Validate the value
 		if ( $value !== null ) {
-			if ( $this->definition->isSingle() && ! $value instanceof Model ) {
-				throw new InvalidArgumentException( 'Single relationship value must be a Model instance or null.' );
+			if ( $this->definition->isSingle() ) {
+				$value = $this->definition->getValidateSanitizeRelationshipWith()( $value );
 			}
 
 			if ( $this->definition->isMultiple() ) {
 				if ( ! is_array( $value ) ) {
-					throw new InvalidArgumentException( 'Multiple relationship value must be an array or null.' );
+					Config::throwInvalidArgumentException( 'Multiple relationship value must be an array or null.' );
 				}
 
-				foreach ( $value as $item ) {
-					if ( ! $item instanceof Model ) {
-						throw new InvalidArgumentException( 'Multiple relationship value must be an array of Model instances.' );
-					}
-				}
+				$sanitizer = $this->definition->getValidateSanitizeRelationshipWith();
+				$value = array_map( $sanitizer, $value );
 			}
 		}
 

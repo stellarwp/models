@@ -24,6 +24,24 @@ class ModelRelationshipDefinition {
 	private bool $cachingEnabled = true;
 
 	/**
+	 * The callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var ?callable
+	 */
+	private $hydrateWith = null;
+
+	/**
+	 * The callable to validate and sanitize the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @var ?callable
+	 */
+	private $validateSanitizeRelationshipWith = null;
+
+	/**
 	 * Whether the definition is locked. Once locked, the definition cannot be changed.
 	 *
 	 * @since 2.0.0
@@ -77,6 +95,66 @@ class ModelRelationshipDefinition {
 		$this->type = Relationship::BELONGS_TO();
 
 		return $this;
+	}
+
+	/**
+	 * Set the callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable $hydrateWith The callable to hydrate the relationship with.
+	 */
+	public function setHydrateWith( callable $hydrateWith ): self {
+		$this->checkLock();
+
+		$this->hydrateWith = $hydrateWith;
+
+		return $this;
+	}
+
+	/**
+	 * Get the callable to hydrate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return callable( mixed $value ): ( Model )
+	 */
+	public function getHydrateWith(): callable {
+		// By default, it returns whats given.
+		return $this->hydrateWith ?? static fn( $value ) => $value;
+	}
+
+	/**
+	 * Set the callable to validate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @param callable $validateSanitizeRelationshipWith The callable to validate the relationship with.
+	 */
+	public function setValidateSanitizeRelationshipWith( callable $validateSanitizeRelationshipWith ): self {
+		$this->checkLock();
+
+		$this->validateSanitizeRelationshipWith = $validateSanitizeRelationshipWith;
+
+		return $this;
+	}
+
+	/**
+	 * Get the callable to validate the relationship with.
+	 *
+	 * @since 2.0.0
+	 *
+	 * @return callable( mixed $thing ): ( Model | null )
+	 */
+
+	public function getValidateSanitizeRelationshipWith(): callable {
+		return $this->validateSanitizeRelationshipWith ?? static function( $thing ): ?Model {
+			if ( null !== $thing && ! $thing instanceof Model ) {
+				throw new InvalidArgumentException( 'Relationship value must be a valid value.' );
+			}
+
+			return $thing;
+		};
 	}
 
 	/**
