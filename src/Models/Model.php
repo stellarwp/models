@@ -8,6 +8,7 @@ use StellarWP\Models\Contracts\Arrayable;
 use StellarWP\Models\Contracts\Model as ModelInterface;
 
 abstract class Model implements ModelInterface, Arrayable, JsonSerializable {
+	// Define modes as powers of two so we can use them for bitwise operations.
 	public const BUILD_MODE_STRICT = 0;
 	public const BUILD_MODE_IGNORE_MISSING = 1;
 	public const BUILD_MODE_IGNORE_EXTRA = 2;
