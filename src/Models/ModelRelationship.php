@@ -115,7 +115,7 @@ class ModelRelationship {
 	 *
 	 * @return Model|list<Model>|null
 	 */
-	private function hydrate( mixed $value ) {
+	private function hydrate( $value ) {
 		if ( null === $value ) {
 			return null;
 		}
